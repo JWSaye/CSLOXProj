@@ -116,7 +116,7 @@ namespace CSLOXProj
 
         private void addToken(TokenType type, Object literal)
         {
-            String text = source.Substring(start, current);
+            string text = source.Substring(start, current);
             tokens.Add(new Token(type, text, literal, line));
         }
 
