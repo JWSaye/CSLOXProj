@@ -116,7 +116,7 @@ namespace CSLOXProj
 
         private void addToken(TokenType type, Object literal)
         {
-            string text = source.Substring(start, current);
+            string text = source.Substring(start, current-start);
             tokens.Add(new Token(type, text, literal, line));
         }
 
@@ -151,7 +151,7 @@ namespace CSLOXProj
             advance();
 
             // Trim the surrounding quotes.
-            string value = source.Substring(start + 1, current - 1);
+            string value = source.Substring(start + 1, current - 1 - (start + 1));
             addToken(TokenType.STRING, value);
         }
 
@@ -174,7 +174,7 @@ namespace CSLOXProj
             }
 
             addToken(TokenType.NUMBER,
-                Double.Parse(source.Substring(start, current)));
+                Double.Parse(source.Substring(start, current-start)));
         }
 
         private char peekNext()
@@ -187,7 +187,7 @@ namespace CSLOXProj
         {
             while (isAlphaNumeric(peek())) advance();
 
-            String text = source.Substring(start, current);
+            String text = source.Substring(start, current-start);
             TokenType type;
             if (!keywords.TryGetValue(text, out type)) type = TokenType.IDENTIFIER;
             addToken(type);

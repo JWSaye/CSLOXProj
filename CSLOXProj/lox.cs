@@ -41,7 +41,7 @@ namespace CSLOXProj
         {
             for (; ; )
             {
-                Console.WriteLine("> ");
+                Console.Write("> ");
                 string line = Console.ReadLine();
                 if (line == null) break;
                 run(line);
@@ -57,7 +57,7 @@ namespace CSLOXProj
             // For now, just print the tokens.
             foreach (Token token in tokens)
             {
-                Console.WriteLine(token);
+                Console.WriteLine(token.toString());
             }
         }
 
