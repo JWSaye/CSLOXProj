@@ -3,10 +3,10 @@ namespace CSLOXProj
 
     public class Token
     {
-        readonly TokenType type;
-        readonly string lexeme;
-        readonly object literal;
-        readonly int line;
+        public readonly TokenType type;
+        public readonly string lexeme;
+        public readonly object literal;
+        public readonly int line;
 
         public Token(TokenType type, string lexeme, object literal, int line)
         {
@@ -16,7 +16,7 @@ namespace CSLOXProj
             this.line = line;
         }
 
-        public string toString()
+        public override string ToString()
         {
             return type + " " + lexeme + " " + literal;
         }
