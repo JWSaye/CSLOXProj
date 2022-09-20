@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSLOXProj
 {
@@ -19,60 +16,60 @@ namespace CSLOXProj
             this.source = source;
         }
 
-        public List<Token> scanTokens()
+        public List<Token> ScanTokens()
         {
-            while (!isAtEnd())
+            while (!IsAtEnd())
             {
                 // We are at the beginning of the next lexeme.
                 start = current;
-                scanToken();
+                ScanToken();
             }
 
             tokens.Add(new Token(TokenType.EOF, "", null, line));
             return tokens;
         }
 
-        private bool isAtEnd()
+        private bool IsAtEnd()
         {
             return current >= source.Length;
         }
 
-        private void scanToken()
+        private void ScanToken()
         {
-            char c = advance();
+            char c = Advance();
             switch (c)
             {
-                case '(': addToken(TokenType.LEFT_PAREN); break;
-                case ')': addToken(TokenType.RIGHT_PAREN); break;
-                case '{': addToken(TokenType.LEFT_BRACE); break;
-                case '}': addToken(TokenType.RIGHT_BRACE); break;
-                case ',': addToken(TokenType.COMMA); break;
-                case '.': addToken(TokenType.DOT); break;
-                case '-': addToken(TokenType.MINUS); break;
-                case '+': addToken(TokenType.PLUS); break;
-                case ';': addToken(TokenType.SEMICOLON); break;
-                case '*': addToken(TokenType.STAR); break;
+                case '(': AddToken(TokenType.LEFT_PAREN); break;
+                case ')': AddToken(TokenType.RIGHT_PAREN); break;
+                case '{': AddToken(TokenType.LEFT_BRACE); break;
+                case '}': AddToken(TokenType.RIGHT_BRACE); break;
+                case ',': AddToken(TokenType.COMMA); break;
+                case '.': AddToken(TokenType.DOT); break;
+                case '-': AddToken(TokenType.MINUS); break;
+                case '+': AddToken(TokenType.PLUS); break;
+                case ';': AddToken(TokenType.SEMICOLON); break;
+                case '*': AddToken(TokenType.STAR); break;
                 case '!':
-                    addToken(match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
+                    AddToken(Match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
                     break;
                 case '=':
-                    addToken(match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
+                    AddToken(Match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
                     break;
                 case '<':
-                    addToken(match('=') ? TokenType.LESS_EQUAL : TokenType.LESS);
+                    AddToken(Match('=') ? TokenType.LESS_EQUAL : TokenType.LESS);
                     break;
                 case '>':
-                    addToken(match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
+                    AddToken(Match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
                     break;
                 case '/':
-                    if (match('/'))
+                    if (Match('/'))
                     {
                         // A comment goes until the end of the line.
-                        while (peek() != '\n' && !isAtEnd()) advance();
+                        while (Peek() != '\n' && !IsAtEnd()) Advance();
                     }
                     else
                     {
-                        addToken(TokenType.SLASH);
+                        AddToken(TokenType.SLASH);
                     }
                     break;
                 case ' ':
@@ -87,122 +84,122 @@ namespace CSLOXProj
                 case '"': String(); break;
 
                 default:
-                    if (isDigit(c))
+                    if (IsDigit(c))
                     {
-                        number();
+                        Number();
                     }
-                    else if (isAlpha(c))
+                    else if (IsAlpha(c))
                     {
-                        identifier();
+                        Identifier();
 
                     }
                     else
                     {
-                        Lox.error(line, "Unexpected character.");
+                        Lox.Error(line, "Unexpected character.");
                     }            
                     break;
             }
         }
 
-        private char advance()
+        private char Advance()
         {
             return source[current++];
         }
 
-        private void addToken(TokenType type)
+        private void AddToken(TokenType type)
         {
-            addToken(type, null);
+            AddToken(type, null);
         }
 
-        private void addToken(TokenType type, Object literal)
+        private void AddToken(TokenType type, Object literal)
         {
             string text = source.Substring(start, current-start);
             tokens.Add(new Token(type, text, literal, line));
         }
 
-        private bool match(char expected)
+        private bool Match(char expected)
         {
-            if (isAtEnd()) return false;
+            if (IsAtEnd()) return false;
             if (source[current] != expected) return false;
 
             current++;
             return true;
         }
 
-        private char peek()
+        private char Peek()
         {
-            if (isAtEnd()) return '\0';
+            if (IsAtEnd()) return '\0';
             return source[current];
         }
 
         private void String () 
         {
-            while (peek() != '"' && !isAtEnd()) {
-                if (peek() == '\n') line++;
-                advance();
+            while (Peek() != '"' && !IsAtEnd()) {
+                if (Peek() == '\n') line++;
+                Advance();
             }
 
-            if (isAtEnd()) {
-                Lox.error(line, "Unterminated string.");
+            if (IsAtEnd()) {
+                Lox.Error(line, "Unterminated string.");
                 return;
             }
 
             // The closing ".
-            advance();
+            Advance();
 
             // Trim the surrounding quotes.
             string value = source.Substring(start + 1, current - 1 - (start + 1));
-            addToken(TokenType.STRING, value);
+            AddToken(TokenType.STRING, value);
         }
 
-        private bool isDigit(char c)
+        private bool IsDigit(char c)
         {
             return c >= '0' && c <= '9';
         }
 
-        private void number()
+        private void Number()
         {
-            while (isDigit(peek())) advance();
+            while (IsDigit(Peek())) Advance();
 
             // Look for a fractional part.
-            if (peek() == '.' && isDigit(peekNext()))
+            if (Peek() == '.' && IsDigit(PeekNext()))
             {
                 // Consume the "."
-                advance();
+                Advance();
 
-                while (isDigit(peek())) advance();
+                while (IsDigit(Peek())) Advance();
             }
 
-            addToken(TokenType.NUMBER,
-                Double.Parse(source.Substring(start, current-start)));
+            AddToken(TokenType.NUMBER,
+                double.Parse(source.Substring(start, current-start)));
         }
 
-        private char peekNext()
+        private char PeekNext()
         {
             if (current + 1 >= source.Length) return '\0';
             return source[current + 1];
         }
 
-        private void identifier()
+        private void Identifier()
         {
-            while (isAlphaNumeric(peek())) advance();
+            while (IsAlphaNumeric(Peek())) Advance();
 
             String text = source.Substring(start, current-start);
             TokenType type;
             if (!keywords.TryGetValue(text, out type)) type = TokenType.IDENTIFIER;
-            addToken(type);
+            AddToken(type);
         }
 
-        private bool isAlpha(char c)
+        private bool IsAlpha(char c)
         {
             return (c >= 'a' && c <= 'z') ||
                    (c >= 'A' && c <= 'Z') ||
                     c == '_';
         }
 
-        private bool isAlphaNumeric(char c)
+        private bool IsAlphaNumeric(char c)
         {
-            return isAlpha(c) || isDigit(c);
+            return IsAlpha(c) || IsDigit(c);
         }
 
         private static readonly Dictionary<string, TokenType> keywords;

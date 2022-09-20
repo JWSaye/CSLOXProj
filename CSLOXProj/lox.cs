@@ -14,64 +14,75 @@ namespace CSLOXProj
         {
             if (args.Length > 1)
             {
-                Console.WriteLine("Usage: jlox [script]");
+                Console.WriteLine("Usage: .\\CSLOXProj [script]");
                 Environment.Exit(64);
             }
 
             else if (args.Length == 1)
             {
-                runFile(args[0]);
+                RunFile(args[0]);
             }
 
             else
             {
-                runPrompt();
+                RunPrompt();
             }
         }
-
-        static private void runFile(string path)
+      
+        static private void RunFile(string path)
         {
             byte[] bytes = File.ReadAllBytes(path);
-            run(BitConverter.ToString(bytes));
+            Run(Encoding.UTF8.GetString(bytes, 0, bytes.Length));
 
             if (hadError) Environment.Exit(65);
         }
 
-        static private void runPrompt()
+        static private void RunPrompt()
         {
             for (; ; )
             {
                 Console.Write("> ");
                 string line = Console.ReadLine();
                 if (line == null) break;
-                run(line);
+                Run(line);
                 hadError = false;
             }
         }
 
-        static private void run(string source)
+        static private void Run(string source)
         {
             Scanner scanner = new Scanner(source);
-            List<Token> tokens = scanner.scanTokens();
+            List<Token> tokens = scanner.ScanTokens();
+            Parser parser = new Parser(tokens);
+            Expr expression = parser.Parse();
 
-            // For now, just print the tokens.
-            foreach (Token token in tokens)
-            {
-                Console.WriteLine(token.toString());
-            }
+            if (hadError) return;
+
+            Console.WriteLine(new AstPrinter().Print(expression));
         }
 
-        static public void error(int line, string message)
+        static public void Error(int line, string message)
         {
-            report(line, "", message);
+            Report(line, "", message);
         }
 
-        static private void report(int line, string where,
+        static private void Report(int line, string where,
                                     string message)
         {
-            Console.WriteLine(
-                "[line " + line + "] Error" + where + ": " + message);
+            Console.WriteLine("[line " + line + "] Error" + where + ": " + message);
             hadError = true;
+        }
+
+        static public void Error(Token token, String message)
+        {
+            if (token.type == TokenType.EOF)
+            {
+                Report(token.line, " at end", message);
+            }
+            else
+            {
+                Report(token.line, " at '" + token.lexeme + "'", message);
+            }
         }
     }
 }
