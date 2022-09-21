@@ -8,7 +8,9 @@ namespace CSLOXProj
 {
     public class Lox
     {
+        private static readonly Interpreter interpreter = new Interpreter();
         static bool hadError = false;
+        static bool hadRuntimeError = false;
 
         static public void Main(string[] args)
         {
@@ -35,6 +37,7 @@ namespace CSLOXProj
             Run(Encoding.UTF8.GetString(bytes, 0, bytes.Length));
 
             if (hadError) Environment.Exit(65);
+            if (hadRuntimeError) Environment.Exit(70);
         }
 
         static private void RunPrompt()
@@ -58,7 +61,7 @@ namespace CSLOXProj
 
             if (hadError) return;
 
-            Console.WriteLine(new AstPrinter().Print(expression));
+            interpreter.Interpret(expression);
         }
 
         static public void Error(int line, string message)
@@ -69,8 +72,10 @@ namespace CSLOXProj
         static private void Report(int line, string where,
                                     string message)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[line " + line + "] Error" + where + ": " + message);
             hadError = true;
+            Console.ResetColor();
         }
 
         static public void Error(Token token, String message)
@@ -83,6 +88,17 @@ namespace CSLOXProj
             {
                 Report(token.line, " at '" + token.lexeme + "'", message);
             }
+        }
+
+        public static void RuntimeError(RuntimeError error)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+
+            Console.WriteLine(error.Message +
+                "\n[line " + error.token.line + "]");
+
+            hadRuntimeError = true;
+            Console.ResetColor();
         }
     }
 }
