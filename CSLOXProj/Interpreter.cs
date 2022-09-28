@@ -11,6 +11,20 @@ namespace CSLOXProj
             return expr.value;
         }
 
+        public object VisitLogicalExpr(Expr.Logical expr)
+        {
+            Object left = Evaluate(expr.left);
+
+            if (expr.Operator.type == TokenType.OR) {
+                if (IsTruthy(left)) return left;
+            } else
+            {
+                if (!IsTruthy(left)) return left;
+            }
+
+            return Evaluate(expr.right);
+        }
+
         public object VisitGroupingExpr(Expr.Grouping expr)
         {
             return Evaluate(expr.expression);
@@ -125,6 +139,19 @@ namespace CSLOXProj
             return;
         }
 
+        public void VisitIfStmt(Stmt.If stmt)
+        {
+            if (IsTruthy(Evaluate(stmt.condition)))
+            {
+                Execute(stmt.thenBranch);
+            }
+            else if (stmt.elseBranch != null)
+            {
+                Execute(stmt.elseBranch);
+            }
+            return;
+        }
+
         public void VisitPrintStmt(Stmt.Print stmt)
         {
             object value = Evaluate(stmt.expression);
@@ -209,6 +236,15 @@ namespace CSLOXProj
             }
 
             return Object.ToString();
+        }
+
+        public void VisitWhileStmt(Stmt.While stmt)
+        {
+            while (IsTruthy(Evaluate(stmt.condition)))
+            {
+                Execute(stmt.body);
+            }
+            return;
         }
     }
 }
