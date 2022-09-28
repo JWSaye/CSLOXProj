@@ -57,11 +57,11 @@ namespace CSLOXProj
             Scanner scanner = new Scanner(source);
             List<Token> tokens = scanner.ScanTokens();
             Parser parser = new Parser(tokens);
-            Expr expression = parser.Parse();
+            List<Stmt> statements = parser.Parse();
 
             if (hadError) return;
 
-            interpreter.Interpret(expression);
+            interpreter.Interpret(statements);
         }
 
         static public void Error(int line, string message)
@@ -78,7 +78,7 @@ namespace CSLOXProj
             Console.ResetColor();
         }
 
-        static public void Error(Token token, String message)
+        static public void Error(Token token, string message)
         {
             if (token.type == TokenType.EOF)
             {

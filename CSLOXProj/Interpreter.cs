@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSLOXProj
 {
-    class Interpreter : Expr.Visitor<object>
+    public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
     {
+        private Environment environment = new Environment();
         public object VisitLiteralExpr(Expr.Literal expr)
         {
             return expr.value;
@@ -32,6 +30,11 @@ namespace CSLOXProj
 
             // Unreachable.
             return null;
+        }
+
+        public object VisitVariableExpr(Expr.Variable expr)
+        {
+            return environment.Get(expr.name);
         }
 
         public object VisitBinaryExpr(Expr.Binary expr)
@@ -85,6 +88,69 @@ namespace CSLOXProj
             return expr.Accept(this);
         }
 
+        private object Execute(Stmt stmt)
+        {
+            if(stmt != null) return stmt.Accept(this);
+            return null;
+        }
+
+        void ExecuteBlock(List<Stmt> statements,
+                    Environment environment)
+        {
+            Environment previous = this.environment;
+            try
+            {
+                this.environment = environment;
+
+                foreach (Stmt statement in statements)
+                {
+                    Execute(statement);
+                }
+            }
+            finally
+            {
+                this.environment = previous;
+            }
+        }
+
+        public void VisitBlockStmt(Stmt.Block stmt)
+        {
+            ExecuteBlock(stmt.statements, new Environment(environment));
+            return;
+        }
+
+        public void VisitExpressionStmt(Stmt.Expression stmt)
+        {
+            Evaluate(stmt.expression);
+            return;
+        }
+
+        public void VisitPrintStmt(Stmt.Print stmt)
+        {
+            object value = Evaluate(stmt.expression);
+            Console.WriteLine(Stringify(value));
+            return;
+        }
+
+        public void VisitVarStmt(Stmt.Var stmt)
+        {
+            Object value = null;
+            if (stmt.initializer != null)
+            {
+                value = Evaluate(stmt.initializer);
+            }
+
+            environment.Define(stmt.name.lexeme, value);
+            return;
+        }
+
+        public object VisitAssignExpr(Expr.Assign expr)
+        {
+            object value = Evaluate(expr.value);
+            environment.Assign(expr.name, value);
+            return value;
+        }
+
         private bool IsTruthy(object truthyObject)
         {
             if (truthyObject == null) return false;
@@ -102,7 +168,7 @@ namespace CSLOXProj
 
         private void CheckNumberOperand(Token Operator, object operand)
         {
-            if (operand is Double) return;
+            if (operand is double) return;
             throw new RuntimeError(Operator, "Operand must be a number.");
         }
 
@@ -114,12 +180,14 @@ namespace CSLOXProj
             throw new RuntimeError(Operator, "Operands must be numbers.");
         }
 
-        public void Interpret(Expr expression)
+        public void Interpret(List<Stmt> statements)
         {
             try
             {
-                Object value = Evaluate(expression);
-                Console.WriteLine(Stringify(value));
+                foreach (Stmt statement in statements)
+                {
+                    Execute(statement);
+                }
             }
             catch (RuntimeError error)
             {
