@@ -78,7 +78,7 @@ namespace CSLOXProj
             Console.ResetColor();
         }
 
-        static public void Error(Token token, String message)
+        static public void Error(Token token, string message)
         {
             if (token.type == TokenType.EOF)
             {
