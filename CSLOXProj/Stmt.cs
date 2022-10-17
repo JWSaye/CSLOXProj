@@ -7,12 +7,12 @@ namespace CSLOXProj
         public interface Visitor<R>
         {
             R VisitBlockStmt(Block stmt);
-            R VisitClassStmt(Class stmt);
+            //R VisitClassStmt(Class stmt);
             R VisitExpressionStmt(Expression stmt);
-            R VisitFunctionStmt(Function stmt);
+            //R VisitFunctionStmt(Function stmt);
             R VisitIfStmt(If stmt);
             R VisitPrintStmt(Print stmt);
-            R VisitReturnStmt(Return stmt);
+            //R VisitReturnStmt(Return stmt);
             R VisitVarStmt(Var stmt);
             R VisitWhileStmt(While stmt);
         }
@@ -31,7 +31,7 @@ namespace CSLOXProj
 
             public readonly List<Stmt> statements;
         }
-
+        /*
         public class Class : Stmt
         {
             Class(Token name,
@@ -50,7 +50,7 @@ namespace CSLOXProj
             public readonly Expr.Variable superclass;
             public readonly List<Stmt.Function> methods;
         }
-
+        */
         public class Expression : Stmt
         {
             public Expression(Expr expression) {
@@ -64,7 +64,7 @@ namespace CSLOXProj
 
             public readonly Expr expression;
         }
-
+        /*
         public class Function : Stmt
         {
             public Function(Token name, List<Token> paramaters, List<Stmt> body)
@@ -83,7 +83,7 @@ namespace CSLOXProj
             public readonly List<Token> paramaters;
             public readonly List<Stmt> body;
         }
-
+        */
         public class If : Stmt
         {
             public If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
@@ -115,7 +115,7 @@ namespace CSLOXProj
 
             public readonly Expr expression;
         }
-
+        /*
         public class Return : Stmt
         {
             public Return(Token keyword, Expr value) {
@@ -131,7 +131,7 @@ namespace CSLOXProj
             public readonly Token keyword;
             public readonly Expr value;
         }
-
+        */
         public class Var : Stmt
         {
             public Var(Token name, Expr initializer) {

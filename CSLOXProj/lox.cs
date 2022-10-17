@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Globalization;
 using System.Collections.Generic;
 
 namespace CSLOXProj
@@ -17,7 +16,7 @@ namespace CSLOXProj
             if (args.Length > 1)
             {
                 Console.WriteLine("Usage: .\\CSLOXProj [script]");
-                Environment.Exit(64);
+                System.Environment.Exit(64);
             }
 
             else if (args.Length == 1)
@@ -36,8 +35,8 @@ namespace CSLOXProj
             byte[] bytes = File.ReadAllBytes(path);
             Run(Encoding.UTF8.GetString(bytes, 0, bytes.Length));
 
-            if (hadError) Environment.Exit(65);
-            if (hadRuntimeError) Environment.Exit(70);
+            if (hadError) System.Environment.Exit(65);
+            if (hadRuntimeError) System.Environment.Exit(70);
         }
 
         static private void RunPrompt()
