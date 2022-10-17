@@ -7,14 +7,14 @@ namespace CSLOXProj {
         {
             R VisitAssignExpr(Assign expr);
             R VisitBinaryExpr(Binary expr);
-            R VisitCallExpr(Call expr);
-            R VisitGetExpr(Get expr);
+            //R VisitCallExpr(Call expr);
+            //R VisitGetExpr(Get expr);
             R VisitGroupingExpr(Grouping expr);
             R VisitLiteralExpr(Literal expr);
             R VisitLogicalExpr(Logical expr);
-            R VisitSetExpr(Set expr);
-            R VisitSuperExpr(Super expr);
-            R VisitThisExpr(This expr);
+            //R VisitSetExpr(Set expr);
+            //R VisitSuperExpr(Super expr);
+            //R VisitThisExpr(This expr);
             R VisitUnaryExpr(Unary expr);
             R VisitVariableExpr(Variable expr);
         }
@@ -85,7 +85,7 @@ namespace CSLOXProj {
             public readonly Token name;
             public readonly Expr value;
         }
-
+        /*
         public class Call : Expr
         {
             public Call(Expr callee, Token paren, List<Expr> arguments) {
@@ -119,7 +119,7 @@ namespace CSLOXProj {
             public readonly Expr Object;
             public readonly Token name;
           }
-
+        */
         public class Logical : Expr
         {
             public Logical(Expr left, Token Operator, Expr right)
@@ -138,7 +138,7 @@ namespace CSLOXProj {
             public readonly Token Operator;
             public readonly Expr right;
         }
-
+        /*
         public class Set : Expr
     {
         public Set(Expr Object, Token name, Expr value) {
@@ -185,7 +185,7 @@ namespace CSLOXProj {
 
             public readonly Token keyword;
         }
-
+        */
         public class Variable : Expr
         {
             public Variable(Token name) {

@@ -127,19 +127,19 @@ namespace CSLOXProj
             }
         }
 
-        public void VisitBlockStmt(Stmt.Block stmt)
+        public object VisitBlockStmt(Stmt.Block stmt)
         {
             ExecuteBlock(stmt.statements, new Environment(environment));
-            return;
+            return null;
         }
 
-        public void VisitExpressionStmt(Stmt.Expression stmt)
+        public object VisitExpressionStmt(Stmt.Expression stmt)
         {
             Evaluate(stmt.expression);
-            return;
+            return null;
         }
 
-        public void VisitIfStmt(Stmt.If stmt)
+        public object VisitIfStmt(Stmt.If stmt)
         {
             if (IsTruthy(Evaluate(stmt.condition)))
             {
@@ -149,17 +149,17 @@ namespace CSLOXProj
             {
                 Execute(stmt.elseBranch);
             }
-            return;
+            return null;
         }
 
-        public void VisitPrintStmt(Stmt.Print stmt)
+        public object VisitPrintStmt(Stmt.Print stmt)
         {
             object value = Evaluate(stmt.expression);
             Console.WriteLine(Stringify(value));
-            return;
+            return null;
         }
 
-        public void VisitVarStmt(Stmt.Var stmt)
+        public object VisitVarStmt(Stmt.Var stmt)
         {
             Object value = null;
             if (stmt.initializer != null)
@@ -168,7 +168,7 @@ namespace CSLOXProj
             }
 
             environment.Define(stmt.name.lexeme, value);
-            return;
+            return null;
         }
 
         public object VisitAssignExpr(Expr.Assign expr)
@@ -238,13 +238,13 @@ namespace CSLOXProj
             return Object.ToString();
         }
 
-        public void VisitWhileStmt(Stmt.While stmt)
+        public object VisitWhileStmt(Stmt.While stmt)
         {
             while (IsTruthy(Evaluate(stmt.condition)))
             {
                 Execute(stmt.body);
             }
-            return;
+            return null;
         }
     }
 }
