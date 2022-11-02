@@ -5,7 +5,21 @@ namespace CSLOXProj
 {
     public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
     {
-        private Environment environment = new Environment();
+        readonly Environment globals = new Environment();
+        private Environment environment = globals;
+
+        Interpreter() {
+            globals.Define("clock", new LoxCallable() {
+                public override int arity() { return 0; }
+                
+                public override object Call(Interpreter interpreter, List<object> arguments) {
+                    return (double)Environment.TickCount / 1000.0;
+                }
+
+                public override string toString() { return "<native fn>"; }
+            });
+        }
+
         public object VisitLiteralExpr(Expr.Literal expr)
         {
             return expr.value;
@@ -245,6 +259,31 @@ namespace CSLOXProj
                 Execute(stmt.body);
             }
             return null;
+        }
+
+        public object VisitCallExpr(Expr.Call expr)
+        {
+            object callee = Evaluate(expr.callee);
+
+            List<object> arguments = new List<object>();
+            foreach(Expr argument in expr.arguments)
+            {
+                arguments.Add(Evaluate(argument));
+            }
+
+            if (!(callee is LoxCallable)) {
+                throw new RuntimeError(expr.paren,
+                  "Can only call functions and classes.");
+            }
+
+            LoxCallable function = (LoxCallable)callee;
+            if (arguments.Count != function.arity()) {
+                throw new RuntimeError(expr.paren, "Expected " +
+                  function.arity() + " arguments but got " +
+                  arguments.size() + ".");
+            }
+
+            return function.Call(this.arguments);
         }
     }
 }

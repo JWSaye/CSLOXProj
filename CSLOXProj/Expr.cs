@@ -7,7 +7,7 @@ namespace CSLOXProj {
         {
             R VisitAssignExpr(Assign expr);
             R VisitBinaryExpr(Binary expr);
-            //R VisitCallExpr(Call expr);
+            R VisitCallExpr(Call expr);
             //R VisitGetExpr(Get expr);
             R VisitGroupingExpr(Grouping expr);
             R VisitLiteralExpr(Literal expr);
@@ -85,7 +85,7 @@ namespace CSLOXProj {
             public readonly Token name;
             public readonly Expr value;
         }
-        /*
+        
         public class Call : Expr
         {
             public Call(Expr callee, Token paren, List<Expr> arguments) {
@@ -103,7 +103,7 @@ namespace CSLOXProj {
             public readonly Token paren;
             public readonly List<Expr> arguments;
         }
-
+        /*
         public class Get : Expr
         {
             public Get(Expr Object, Token name) {
