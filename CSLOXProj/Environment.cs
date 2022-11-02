@@ -38,8 +38,7 @@ namespace CSLOXProj
         {
             if (values.ContainsKey(name.lexeme))
             {
-                //values[name.lexeme] = value;
-                values.Add(name.lexeme, value);
+                values[name.lexeme] = value;
                 return;
             }
 
