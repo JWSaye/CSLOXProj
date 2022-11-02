@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using static CSLOXProj.Expr;
+using static CSLOXProj.Stmt;
 
 namespace CSLOXProj
 {
@@ -14,21 +16,151 @@ namespace CSLOXProj
             this.tokens = tokens;
         }
 
-        public Expr Parse()
+        public List<Stmt> Parse()
         {
-            try
+            List<Stmt> statements = new List<Stmt>();
+            while (!IsAtEnd())
             {
-                return Expression();
+                statements.Add(Declaration());
             }
-            catch (ParseError error)
-            {
-                return null;
-            }
+
+            return statements;
         }
 
         private Expr Expression()
         {
-            return Equality();
+            return Assignment();
+        }
+
+        private Stmt Declaration()
+        {
+            try
+            {
+                if (Match(TokenType.VAR)) return VarDeclaration();
+
+                return Statement();
+            }
+            catch (ParseError error)
+            {
+                Synchronize();
+                return null;
+            }
+        }
+
+        private Stmt Statement()
+        {
+            if (Match(TokenType.FOR)) return ForStatement();
+            if (Match(TokenType.IF)) return IfStatement();
+            if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.WHILE)) return WhileStatement();
+            if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(Block());
+
+            return ExpressionStatement();
+        }
+
+        private Stmt IfStatement()
+        {
+            Consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
+            Expr condition = Expression();
+            Consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+
+            Stmt thenBranch = Statement();
+            Stmt elseBranch = null;
+            if (Match(TokenType.ELSE))
+            {
+                elseBranch = Statement();
+            }
+
+            return new Stmt.If(condition, thenBranch, elseBranch);
+        }
+
+        private Stmt PrintStatement()
+        {
+            Expr value = Expression();
+            Consume(TokenType.SEMICOLON, "Expect ';' after value.");
+            return new Stmt.Print(value);
+        }
+
+        private Stmt VarDeclaration()
+        {
+            Token name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
+
+            Expr initializer = null;
+            if (Match(TokenType.EQUAL))
+            {
+                initializer = Expression();
+            }
+
+            Consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+            return new Stmt.Var(name, initializer);
+        }
+
+        private Stmt ExpressionStatement()
+        {
+            Expr expr = Expression();
+            Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+            return new Stmt.Expression(expr);
+        }
+
+        private List<Stmt> Block()
+        {
+            List<Stmt> statements = new List<Stmt>();
+
+            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
+            {
+                statements.Add(Declaration());
+            }
+
+            Consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+            return statements;
+        }
+
+        private Expr Assignment()
+        {
+            Expr expr = Or();
+
+            if (Match(TokenType.EQUAL))
+            {
+                Token equals = Previous();
+                Expr value = Assignment();
+
+                if (expr is Expr.Variable) {
+                    Token name = ((Expr.Variable)expr).name;
+                    return new Expr.Assign(name, value);
+                }
+
+                Error(equals, "Invalid assignment target.");
+            }
+
+            return expr;
+        }
+
+        private Expr Or()
+        {
+            Expr expr = And();
+
+            while (Match(TokenType.OR))
+            {
+                Token Operator = Previous();
+                Expr right = And();
+                expr = new Expr.Logical(expr, Operator, right);
+            }
+
+            return expr;
+        }
+
+        private Expr And()
+        {
+            Expr expr = Equality();
+
+            while (Match(TokenType.AND))
+            {
+                Token Operator = Previous();
+                Expr right = Equality();
+                expr = new Expr.Logical(expr, Operator, right);
+            }
+
+            return expr;
         }
 
         private Expr Equality()
@@ -151,6 +283,11 @@ namespace CSLOXProj
                 return new Expr.Literal(Previous().literal);
             }
 
+            if (Match(TokenType.IDENTIFIER))
+            {
+                return new Expr.Variable(Previous());
+            }
+
             if (Match(TokenType.LEFT_PAREN))
             {
                 Expr expr = Expression();
@@ -197,6 +334,69 @@ namespace CSLOXProj
 
                 Advance();
             }
+        }
+
+        private Stmt WhileStatement()
+        {
+            Consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
+            Expr condition = Expression();
+            Consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
+            Stmt body = Statement();
+
+            return new Stmt.While(condition, body);
+        }
+
+        private Stmt ForStatement()
+        {
+            Consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
+
+            Stmt initializer;
+            if (Match(TokenType.SEMICOLON))
+            {
+                initializer = null;
+            }
+            else if (Match(TokenType.VAR))
+            {
+                initializer = VarDeclaration();
+            }
+            else
+            {
+                initializer = ExpressionStatement();
+            }
+
+            Expr condition = null;
+            if (!Check(TokenType.SEMICOLON))
+            {
+                condition = Expression();
+            }
+            Consume(TokenType.SEMICOLON, "Expect ';' after loop condition.");
+
+            Expr increment = null;
+            if (!Check(TokenType.RIGHT_PAREN))
+            {
+                increment = Expression();
+            }
+            Consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
+
+            Stmt body = Statement();
+
+            if (increment != null)
+            {
+                body = new Stmt.Block(
+                    new List<Stmt>(new[] {
+                        body,
+                        new Stmt.Expression(increment) }));
+            }
+
+            if (condition == null) condition = new Expr.Literal(true);
+            body = new Stmt.While(condition, body);
+
+            if (initializer != null)
+            {
+                body = new Stmt.Block(new List<Stmt>(new[] { initializer, body }));
+            }
+
+            return body;
         }
     }
 }
