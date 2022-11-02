@@ -9,7 +9,7 @@ namespace CSLOXProj
     public class Environment
     {
         readonly Environment enclosing;
-        private readonly IDictionary<string, object> values = new Dictionary<string, object>();
+        private readonly Dictionary<string, object> values = new Dictionary<string, object>();
 
         public Environment()
         {
@@ -38,6 +38,7 @@ namespace CSLOXProj
         {
             if (values.ContainsKey(name.lexeme))
             {
+                //values[name.lexeme] = value;
                 values.Add(name.lexeme, value);
                 return;
             }
