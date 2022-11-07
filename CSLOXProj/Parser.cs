@@ -36,6 +36,7 @@ namespace CSLOXProj
         {
             try
             {
+                if (Match(TokenType.FUN)) return Function("function");
                 if (Match(TokenType.VAR)) return VarDeclaration();
 
                 return Statement();
@@ -100,6 +101,31 @@ namespace CSLOXProj
             Expr expr = Expression();
             Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
             return new Stmt.Expression(expr);
+        }
+
+        private Stmt.Function Function(String kind)
+        {
+            Token name = Consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+            Consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
+            List<Token> parameters = new List<Token>();
+            if (!Check(TokenType.RIGHT_PAREN))
+            {
+                do
+                {
+                    if (parameters.Count >= 255)
+                    {
+                        Error(Peek(), "Can't have more than 255 parameters.");
+                    }
+
+                    parameters.Add(
+                        Consume(TokenType.IDENTIFIER, "Expect parameter name."));
+                } while (Match(TokenType.COMMA));
+            }
+            Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+
+            Consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+            List<Stmt> body = Block();
+            return new Stmt.Function(name, parameters, body);
         }
 
         private List<Stmt> Block()
@@ -269,8 +295,39 @@ namespace CSLOXProj
                 return new Expr.Unary(Operator, right);
             }
 
-            return Primary();
+            return Call();
         }
+
+        private Expr Call() {
+            Expr expr = Primary();
+
+            while (true) { 
+              if (Match(TokenType.LEFT_PAREN)) {
+                expr = FinishCall(expr);
+              } else {
+                break;
+              }
+            }
+
+            return expr;
+        }
+
+         private Expr finishCall(Expr callee) {
+            List<Expr> arguments = new List<Expr>();
+            if (!Check(TokenType.RIGHT_PAREN)) {
+                do {
+                    if (arguments.Count >= 255) {
+                        Error(Peek(), "Can't have more than 255 arguments.");
+                    }
+                    arguments.Add(Expression());
+                } while (Match(TokenType.COMMA));
+            }
+
+            Token paren = Consume(TokenType.RIGHT_PAREN,
+                                  "Expect ')' after arguments.");
+
+            return new Expr.Call(callee, paren, arguments);
+         }
 
         private Expr Primary()
         {

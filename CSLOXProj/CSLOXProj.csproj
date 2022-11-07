@@ -43,7 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Clocks.cs" />
+    <Compile Include="LoxFunction.cs" />
     <Compile Include="Environment.cs" />
+    <Compile Include="LoxCallable.cs" />
     <Compile Include="Stmt.cs" />
     <Compile Include="RuntimeError.cs" />
     <Compile Include="Interpreter.cs" />

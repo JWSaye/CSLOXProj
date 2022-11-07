@@ -8,11 +8,12 @@ namespace CSLOXProj
 {
     public class Environment
     {
-        readonly Environment enclosing;
-        private readonly Dictionary<string, object> values = new Dictionary<string, object>();
+        private Environment enclosing;
+        private Dictionary<string, object> values;
 
         public Environment()
         {
+            values = new Dictionary<string, object>();
             enclosing = null;
         }
 

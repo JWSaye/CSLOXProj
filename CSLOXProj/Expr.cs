@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
+using static CSLOXProj.Stmt;
 
 namespace CSLOXProj { 
     public abstract class Expr {
-        public interface Visitor<R> 
+        public interface IVisitor<R> 
         {
             R VisitAssignExpr(Assign expr);
             R VisitBinaryExpr(Binary expr);
-            //R VisitCallExpr(Call expr);
+            R VisitCallExpr(Call expr);
             //R VisitGetExpr(Get expr);
             R VisitGroupingExpr(Grouping expr);
             R VisitLiteralExpr(Literal expr);
@@ -26,7 +27,7 @@ namespace CSLOXProj {
                 this.right = right;
             }
 
-            public override R Accept<R>(Visitor<R> visitor) {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitBinaryExpr(this);
             }
 
@@ -39,7 +40,7 @@ namespace CSLOXProj {
                 this.expression = expression;
             }
 
-            public override R Accept<R>(Visitor<R> visitor) {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitGroupingExpr(this);
             }
 
@@ -50,7 +51,7 @@ namespace CSLOXProj {
                 this.value = value;
             }
 
-            public override R Accept<R>(Visitor<R> visitor) {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitLiteralExpr(this);
             }
 
@@ -62,7 +63,7 @@ namespace CSLOXProj {
                 this.right = right;
             }
 
-            public override R Accept<R>(Visitor<R> visitor) {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitUnaryExpr(this);
             }
 
@@ -77,7 +78,7 @@ namespace CSLOXProj {
                 this.value = value;
             }
 
-            public override R Accept<R>(Visitor<R> visitor)
+            public override R Accept<R>(IVisitor<R> visitor)
             {
                 return visitor.VisitAssignExpr(this);
             }
@@ -85,7 +86,7 @@ namespace CSLOXProj {
             public readonly Token name;
             public readonly Expr value;
         }
-        /*
+        
         public class Call : Expr
         {
             public Call(Expr callee, Token paren, List<Expr> arguments) {
@@ -94,7 +95,7 @@ namespace CSLOXProj {
                 this.arguments = arguments;
             }
 
-            public override R Accept<R>(Visitor<R> visitor)
+            public override R Accept<R>(IVisitor<R> visitor)
             {
                 return visitor.VisitCallExpr(this);
             }
@@ -103,7 +104,7 @@ namespace CSLOXProj {
             public readonly Token paren;
             public readonly List<Expr> arguments;
         }
-
+        /*
         public class Get : Expr
         {
             public Get(Expr Object, Token name) {
@@ -129,7 +130,7 @@ namespace CSLOXProj {
                 this.right = right;
             }
 
-            public override R Accept<R>(Visitor<R> visitor)
+            public override R Accept<R>(IVisitor<R> visitor)
             {
                 return visitor.VisitLogicalExpr(this);
             }
@@ -193,13 +194,31 @@ namespace CSLOXProj {
             }
 
         
-            public override R Accept<R>(Visitor<R> visitor) {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitVariableExpr(this);
             }
 
             public readonly Token name;
         }
 
-        public abstract R Accept<R>(Visitor<R> visitor);
+        public class Function : Stmt
+        {
+            Function(Token name, List<Token> Params, List<Stmt> body) {
+                  this.name = name;
+                  this.Params = Params;
+                  this.body = body;
+                }
+
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitFunctionStmt(this);
+            }
+
+                readonly Token name;
+                readonly List<Token> Params;
+                readonly List<Stmt> body;
+        }
+
+public abstract R Accept<R>(IVisitor<R> visitor);
     }
 }
