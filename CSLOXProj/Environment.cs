@@ -31,7 +31,7 @@ namespace CSLOXProj
 
             if (enclosing != null) return enclosing.Get(name);
 
-            throw new RuntimeError(name,
+            throw new LoxExceptions(name,
                 "Undefined variable '" + name.lexeme + "'.");
         }
 
@@ -49,7 +49,7 @@ namespace CSLOXProj
                 return;
             }
 
-            throw new RuntimeError(name,
+            throw new LoxExceptions(name,
                 "Undefined variable '" + name.lexeme + "'.");
         }
 

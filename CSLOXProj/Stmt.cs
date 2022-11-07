@@ -14,7 +14,7 @@ namespace CSLOXProj
             R VisitFunctionStmt(Function stmt);
             R VisitIfStmt(If stmt);
             R VisitPrintStmt(Print stmt);
-            //R VisitReturnStmt(Return stmt);
+            R VisitReturnStmt(Return stmt);
             R VisitVarStmt(Var stmt);
             R VisitWhileStmt(While stmt);
         }
@@ -97,7 +97,7 @@ namespace CSLOXProj
 
             public readonly Expr expression;
         }
-        /*
+        
         public class Return : Stmt
         {
             public Return(Token keyword, Expr value) {
@@ -105,7 +105,7 @@ namespace CSLOXProj
                 this.value = value;
             }
 
-            public override R Accept<R>(Visitor<R> visitor)
+            public override R Accept<R>(IVisitor<R> visitor)
             {
                 return visitor.VisitReturnStmt(this);
             }
@@ -113,7 +113,7 @@ namespace CSLOXProj
             public readonly Token keyword;
             public readonly Expr value;
         }
-        */
+        
         public class Var : Stmt
         {
             public Var(Token name, Expr initializer) {
@@ -162,6 +162,6 @@ namespace CSLOXProj
             public readonly List<Token> Params;
             public readonly List<Stmt> body;
         }
-public abstract R Accept<R>(IVisitor<R> visitor);
+        public abstract R Accept<R>(IVisitor<R> visitor);
     }
 }

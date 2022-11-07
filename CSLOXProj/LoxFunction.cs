@@ -5,8 +5,10 @@ namespace CSLOXProj
     public class LoxFunction : LoxCallable
     {
         private readonly Stmt.Function declaration;
-        public LoxFunction(Stmt.Function declaration)
+        private readonly Environment closure;
+        public LoxFunction(Stmt.Function declaration, Environment closure)
         {
+            this.closure = closure;
             this.declaration = declaration;
         }
 
@@ -18,14 +20,21 @@ namespace CSLOXProj
         public object Call(Interpreter interpreter,
                      List<object> arguments)
         {
-            Environment environment = new Environment(interpreter.globals);
+            Environment environment = new Environment(closure);
             for (int i = 0; i < declaration.Params.Count; i++)
             {
                 environment.Define(declaration.Params[i].lexeme,
                     arguments[i]);
             }
 
-            interpreter.ExecuteBlock(declaration.body, environment);
+            try
+            {
+                interpreter.ExecuteBlock(declaration.body, environment);
+            }
+            catch (Return returnValue)
+            {
+                return returnValue.value;
+            }
             return null;
         }
 

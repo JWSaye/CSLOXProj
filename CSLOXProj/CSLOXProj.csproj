@@ -47,8 +47,9 @@
     <Compile Include="LoxFunction.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="LoxCallable.cs" />
+    <Compile Include="Return.cs" />
     <Compile Include="Stmt.cs" />
-    <Compile Include="RuntimeError.cs" />
+    <Compile Include="LoxExceptions.cs" />
     <Compile Include="Interpreter.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Expr.cs" />
