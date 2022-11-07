@@ -89,7 +89,7 @@ namespace CSLOXProj
             }
         }
 
-        public static void RuntimeError(RuntimeError error)
+        public static void RuntimeError(LoxExceptions error)
         {
             Console.ForegroundColor = ConsoleColor.Red;
 

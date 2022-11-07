@@ -1,6 +1,7 @@
 ﻿using CSLOXProj;
 using System;
 using System.Collections.Generic;
+using static CSLOXProj.Stmt;
 
 namespace CSLOXProj
 {
@@ -104,7 +105,7 @@ namespace CSLOXProj
                         return (string)left + (string)right;
                     }
 
-                    throw new RuntimeError(expr.Operator,
+                    throw new LoxExceptions(expr.Operator,
             "Operands must be two numbers or two strings.");
             }
 
@@ -156,7 +157,7 @@ namespace CSLOXProj
 
         public object VisitFunctionStmt(Stmt.Function stmt)
         {
-            LoxFunction function = new LoxFunction(stmt);
+            LoxFunction function = new LoxFunction(stmt, environment);
             environment.Define(stmt.name.lexeme, function);
             return null;
         }
@@ -179,6 +180,14 @@ namespace CSLOXProj
             object value = Evaluate(stmt.expression);
             Console.WriteLine(Stringify(value));
             return null;
+        }
+
+        public object VisitReturnStmt(Stmt.Return stmt)
+        {
+            object value = null;
+            if (stmt.value != null) value = Evaluate(stmt.value);
+
+            throw new Return(value);
         }
 
         public object VisitVarStmt(Stmt.Var stmt)
@@ -218,7 +227,7 @@ namespace CSLOXProj
         private void CheckNumberOperand(Token Operator, object operand)
         {
             if (operand is double) return;
-            throw new RuntimeError(Operator, "Operand must be a number.");
+            throw new LoxExceptions(Operator, "Operand must be a number.");
         }
 
         private void CheckNumberOperands(Token Operator,
@@ -226,7 +235,7 @@ namespace CSLOXProj
         {
             if (left is double && right is double) return;
 
-            throw new RuntimeError(Operator, "Operands must be numbers.");
+            throw new LoxExceptions(Operator, "Operands must be numbers.");
         }
 
         public void Interpret(List<Stmt> statements)
@@ -238,7 +247,7 @@ namespace CSLOXProj
                     Execute(statement);
                 }
             }
-            catch (RuntimeError error)
+            catch (LoxExceptions error)
             {
                 Lox.RuntimeError(error);
             }
@@ -282,11 +291,11 @@ namespace CSLOXProj
             LoxCallable function = callee as LoxCallable;
 
             if (callee == null) {
-                throw new RuntimeError(expr.paren,"Can only call functions and classes.");
+                throw new LoxExceptions(expr.paren,"Can only call functions and classes.");
             }
 
             if (arguments.Count != function.Arity) {
-                throw new RuntimeError(expr.paren, "Expected " + function.Arity + " arguments but got " + arguments.Count + ".");
+                throw new LoxExceptions(expr.paren, "Expected " + function.Arity + " arguments but got " + arguments.Count + ".");
             }
 
             return function.Call(this, arguments);
