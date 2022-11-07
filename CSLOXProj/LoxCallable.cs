@@ -1,11 +1,10 @@
-using System;
 using System.Collections.Generic;
 
 namespace CSLOXProj
 {
-    interface LoxCallable
+    public interface LoxCallable
     {
-        int arity();
-        object Call(Interpreter, List<object> arguments);
+        int Arity { get; }
+        object Call(Interpreter interpreter, List<object> arguments);
     }
 }

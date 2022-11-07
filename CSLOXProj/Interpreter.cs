@@ -1,23 +1,24 @@
-﻿using System;
+﻿using CSLOXProj;
+using System;
 using System.Collections.Generic;
 
 namespace CSLOXProj
 {
-    public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
+    public class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object>
     {
-        readonly Environment globals = new Environment();
-        private Environment environment = globals;
+        public Environment globals;
+        private Environment environment;
 
         Interpreter() {
-            globals.Define("clock", new LoxCallable() {
-                public override int arity() { return 0; }
-                
-                public override object Call(Interpreter interpreter, List<object> arguments) {
-                    return (double)Environment.TickCount / 1000.0;
-                }
+            globals = new Environment();
+            environment = globals;
+            DefineNativeFunctions();
+        }
 
-                public override string toString() { return "<native fn>"; }
-            });
+        private void DefineNativeFunctions()
+        {
+            LoxCallable clock = new Clocks();
+            globals.Define("clock", clock);
         }
 
         public object VisitLiteralExpr(Expr.Literal expr)
@@ -122,7 +123,7 @@ namespace CSLOXProj
             return null;
         }
 
-        void ExecuteBlock(List<Stmt> statements,
+        public void ExecuteBlock(List<Stmt> statements,
                     Environment environment)
         {
             Environment previous = this.environment;
@@ -150,6 +151,13 @@ namespace CSLOXProj
         public object VisitExpressionStmt(Stmt.Expression stmt)
         {
             Evaluate(stmt.expression);
+            return null;
+        }
+
+        public object VisitFunctionStmt(Stmt.Function stmt)
+        {
+            LoxFunction function = new LoxFunction(stmt);
+            environment.Define(stmt.name.lexeme, function);
             return null;
         }
 
@@ -271,19 +279,17 @@ namespace CSLOXProj
                 arguments.Add(Evaluate(argument));
             }
 
-            if (!(callee is LoxCallable)) {
-                throw new RuntimeError(expr.paren,
-                  "Can only call functions and classes.");
+            LoxCallable function = callee as LoxCallable;
+
+            if (callee == null) {
+                throw new RuntimeError(expr.paren,"Can only call functions and classes.");
             }
 
-            LoxCallable function = (LoxCallable)callee;
-            if (arguments.Count != function.arity()) {
-                throw new RuntimeError(expr.paren, "Expected " +
-                  function.arity() + " arguments but got " +
-                  arguments.size() + ".");
+            if (arguments.Count != function.Arity) {
+                throw new RuntimeError(expr.paren, "Expected " + function.Arity + " arguments but got " + arguments.Count + ".");
             }
 
-            return function.Call(this.arguments);
+            return function.Call(this, arguments);
         }
     }
 }
