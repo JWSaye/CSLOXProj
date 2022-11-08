@@ -31,8 +31,7 @@ namespace CSLOXProj
 
             if (enclosing != null) return enclosing.Get(name);
 
-            throw new LoxExceptions(name,
-                "Undefined variable '" + name.lexeme + "'.");
+            throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
         }
 
         public void Assign(Token name, Object value)
@@ -49,8 +48,7 @@ namespace CSLOXProj
                 return;
             }
 
-            throw new LoxExceptions(name,
-                "Undefined variable '" + name.lexeme + "'.");
+            throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
         }
 
         public void Define(string name, object value)
