@@ -56,6 +56,23 @@ namespace CSLOXProj
             return value;
         }
 
+        public object VisitSuperExpr(Expr.Super expr)
+        {
+            int distance = locals[expr];
+            LoxClass superclass = (LoxClass)environment.GetAt(distance, "super");
+
+            LoxInstance Object = (LoxInstance)environment.GetAt(distance - 1, "this");
+
+            LoxFunction method = superclass.FindMethod(expr.method.lexeme);
+
+            if (method == null)
+            {
+                throw new RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+            }
+
+            return method.Bind(Object);
+        }
+
         public object VisitThisExpr(Expr.This expr)
         {
             return LookUpVariable(expr.keyword, expr);
@@ -189,7 +206,22 @@ namespace CSLOXProj
 
         public object VisitClassStmt(Stmt.Class stmt)
         {
+            object superclass = null;
+            if (stmt.superclass != null)
+            {
+                superclass = Evaluate(stmt.superclass);
+                if (!(superclass is LoxClass)) {
+                    throw new RuntimeError(stmt.superclass.name, "Superclass must be a class.");
+                }
+            }
+
             environment.Define(stmt.name.lexeme, null);
+
+            if (stmt.superclass != null)
+            {
+                environment = new Environment(environment);
+                environment.Define("super", superclass);
+            }
 
             Dictionary<string, LoxFunction> methods = new Dictionary<string, LoxFunction>();
             foreach (Stmt.Function method in stmt.methods)
@@ -198,7 +230,12 @@ namespace CSLOXProj
                 methods[method.name.lexeme] = function;
             }
 
-            LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+            LoxClass klass = new LoxClass(stmt.name.lexeme, (LoxClass)superclass, methods);
+
+            if (superclass != null)
+            {
+                environment = environment.enclosing;
+            }
 
             environment.Assign(stmt.name, klass);
             return null;

@@ -14,7 +14,7 @@ namespace CSLOXProj {
             R VisitLiteralExpr(Literal expr);
             R VisitLogicalExpr(Logical expr);
             R VisitSetExpr(Set expr);
-            //R VisitSuperExpr(Super expr);
+            R VisitSuperExpr(Super expr);
             R VisitThisExpr(This expr);
             R VisitUnaryExpr(Unary expr);
             R VisitVariableExpr(Variable expr);
@@ -156,7 +156,7 @@ namespace CSLOXProj {
             public readonly Token name;
             public readonly Expr value;
         }
-        /*
+        
         public class Super : Expr
         {
             public Super(Token keyword, Token method) {
@@ -172,7 +172,7 @@ namespace CSLOXProj {
             public readonly Token keyword;
             public readonly Token method;
         }
-        */
+        
         public class This : Expr
         {
             public This(Token keyword) {
