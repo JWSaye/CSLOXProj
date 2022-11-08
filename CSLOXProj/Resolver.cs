@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CSLOXProj
 {
-    class Resolver : Expr.IVisitor<Void>, Stmt.IVisitor<Void> {
+    class Resolver : Expr.IVisitor<object>, Stmt.IVisitor<object> {
         private readonly Interpreter interpreter;
         private readonly List<Dictionary<string, bool>> scopes;
         private FunctionType currentFunction = FunctionType.NONE;
@@ -16,6 +16,22 @@ namespace CSLOXProj
             this.interpreter = interpreter;
             scopes = new List<Dictionary<string, bool>>();
         }
+
+        private enum FunctionType
+        {
+            NONE,
+            FUNCTION,
+            INITIALIZER,
+            METHOD
+        }
+
+        private enum ClassType
+        {
+            NONE,
+            CLASS
+        }
+
+        private ClassType currentClass = ClassType.NONE;
 
         public void Resolve(List<Stmt> statements)
         {
@@ -30,6 +46,11 @@ namespace CSLOXProj
             stmt.Accept(this);
         }
 
+        private void Resolve(Expr expr)
+        {
+            expr.Accept(this);
+        }
+
         public object VisitBlockStmt(Stmt.Block stmt)
         {
             BeginScope();
@@ -40,10 +61,32 @@ namespace CSLOXProj
 
         public object VisitClassStmt(Stmt.Class stmt)
         {
+            ClassType enclosingClass = currentClass;
+            currentClass = ClassType.CLASS;
+
             Declare(stmt.name);
             Define(stmt.name);
+
+            BeginScope();
+            scopes[0]["this"] = true;
+
+            foreach (Stmt.Function method in stmt.methods)
+            {
+                FunctionType declaration = FunctionType.METHOD;
+                if (method.name.lexeme.Equals("init"))
+                {
+                    declaration = FunctionType.INITIALIZER;
+                }
+
+                ResolveFunction(method, declaration);
+            }
+
+            EndScope();
+
+            currentClass = enclosingClass;
             return null;
         }
+
 
         public object VisitExpressionStmt(Stmt.Expression stmt)
         {
@@ -83,6 +126,12 @@ namespace CSLOXProj
 
             if (stmt.value != null)
             {
+                if (currentFunction == FunctionType.INITIALIZER)
+                {
+                    Lox.Error(stmt.keyword,
+                        "Can't return a value from an initializer.");
+                }
+
                 Resolve(stmt.value);
             }
 
@@ -135,6 +184,12 @@ namespace CSLOXProj
             return null;
         }
 
+        public object VisitGetExpr(Expr.Get expr)
+        {
+            Resolve(expr.Object);
+            return null;
+        }
+
         public object VisitGroupingExpr(Expr.Grouping expr)
         {
             Resolve(expr.expression);
@@ -150,6 +205,26 @@ namespace CSLOXProj
         {
             Resolve(expr.left);
             Resolve(expr.right);
+            return null;
+        }
+
+        public object VisitSetExpr(Expr.Set expr)
+        {
+            Resolve(expr.value);
+            Resolve(expr.Object);
+            return null;
+        }
+
+        public object VisitThisExpr(Expr.This expr)
+        {
+            if (currentClass == ClassType.NONE)
+            {
+                Lox.Error(expr.keyword,
+                    "Can't use 'this' outside of a class.");
+                return null;
+            }
+
+            ResolveLocal(expr, expr.keyword);
             return null;
         }
 

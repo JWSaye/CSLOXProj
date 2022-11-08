@@ -9,13 +9,13 @@ namespace CSLOXProj {
             R VisitAssignExpr(Assign expr);
             R VisitBinaryExpr(Binary expr);
             R VisitCallExpr(Call expr);
-            //R VisitGetExpr(Get expr);
+            R VisitGetExpr(Get expr);
             R VisitGroupingExpr(Grouping expr);
             R VisitLiteralExpr(Literal expr);
             R VisitLogicalExpr(Logical expr);
-            //R VisitSetExpr(Set expr);
+            R VisitSetExpr(Set expr);
             //R VisitSuperExpr(Super expr);
-            //R VisitThisExpr(This expr);
+            R VisitThisExpr(This expr);
             R VisitUnaryExpr(Unary expr);
             R VisitVariableExpr(Variable expr);
         }
@@ -104,7 +104,7 @@ namespace CSLOXProj {
             public readonly Token paren;
             public readonly List<Expr> arguments;
         }
-        /*
+        
         public class Get : Expr
         {
             public Get(Expr Object, Token name) {
@@ -112,7 +112,7 @@ namespace CSLOXProj {
                 this.name = name;
             }
 
-            public override R Accept<R>(Visitor<R> visitor)
+            public override R Accept<R>(IVisitor<R> visitor)
             {
                 return visitor.VisitGetExpr(this);
             }
@@ -120,7 +120,7 @@ namespace CSLOXProj {
             public readonly Expr Object;
             public readonly Token name;
           }
-        */
+        
         public class Logical : Expr
         {
             public Logical(Expr left, Token Operator, Expr right)
@@ -139,24 +139,24 @@ namespace CSLOXProj {
             public readonly Token Operator;
             public readonly Expr right;
         }
-        /*
+        
         public class Set : Expr
-    {
-        public Set(Expr Object, Token name, Expr value) {
-            this.Object = Object;
-            this.name = name;
-            this.value = value;
+        {
+            public Set(Expr Object, Token name, Expr value) {
+                this.Object = Object;
+                this.name = name;
+                this.value = value;
+            }
+
+            public override R Accept<R>(IVisitor<R> visitor) {
+                    return visitor.VisitSetExpr(this);
+            }
+
+            public readonly Expr Object;
+            public readonly Token name;
+            public readonly Expr value;
         }
-
-        public override R Accept<R>(Visitor<R> visitor) {
-                return visitor.VisitSetExpr(this);
-        }
-
-        public readonly Expr Object;
-        public readonly Token name;
-        public readonly Expr value;
-    }
-
+        /*
         public class Super : Expr
         {
             public Super(Token keyword, Token method) {
@@ -165,14 +165,14 @@ namespace CSLOXProj {
             }
 
         
-            public override R Accept<R>(Visitor<R> visitor) {
+            public override R Accept<R>(IVisitor<R> visitor) {
                     return visitor.VisitSuperExpr(this);
             }
 
             public readonly Token keyword;
             public readonly Token method;
         }
-
+        */
         public class This : Expr
         {
             public This(Token keyword) {
@@ -180,13 +180,13 @@ namespace CSLOXProj {
             }
 
         
-            public override R Accept<R>(Visitor<R> visitor) {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitThisExpr(this);
             }
 
             public readonly Token keyword;
         }
-        */
+        
         public class Variable : Expr
         {
             public Variable(Token name) {
@@ -201,23 +201,7 @@ namespace CSLOXProj {
             public readonly Token name;
         }
 
-        public class Function : Stmt
-        {
-            Function(Token name, List<Token> Params, List<Stmt> body) {
-                  this.name = name;
-                  this.Params = Params;
-                  this.body = body;
-                }
-
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
-                return visitor.VisitFunctionStmt(this);
-            }
-
-                readonly Token name;
-                readonly List<Token> Params;
-                readonly List<Stmt> body;
-        }
+        
 
 public abstract R Accept<R>(IVisitor<R> visitor);
     }

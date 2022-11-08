@@ -1,15 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace CSLOXProj
 {
-    public class LoxFunction : LoxCallable
+    public class LoxFunction : ILoxCallable
     {
         private readonly Stmt.Function declaration;
         private readonly Environment closure;
-        public LoxFunction(Stmt.Function declaration, Environment closure)
+        private readonly bool isInitializer;
+
+        public LoxFunction(Stmt.Function declaration, Environment closure, bool isInitializer)
         {
+            this.isInitializer = isInitializer;
             this.closure = closure;
             this.declaration = declaration;
+        }
+
+        public LoxFunction Bind(LoxInstance instance)
+        {
+            Environment environment = new Environment(closure);
+            environment.Define("this", instance);
+            return new LoxFunction(declaration, environment, isInitializer);
         }
 
         public override string ToString()
@@ -33,8 +44,12 @@ namespace CSLOXProj
             }
             catch (Return returnValue)
             {
+                if (isInitializer) return closure.GetAt(0, "this");
+
                 return returnValue.value;
             }
+
+            if (isInitializer) return closure.GetAt(0, "this");
             return null;
         }
 

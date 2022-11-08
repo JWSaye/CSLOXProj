@@ -19,7 +19,7 @@ namespace CSLOXProj
 
         private void DefineNativeFunctions()
         {
-            LoxCallable clock = new Clocks();
+            ILoxCallable clock = new Clocks();
             globals.Define("clock", clock);
         }
 
@@ -40,6 +40,25 @@ namespace CSLOXProj
             }
 
             return Evaluate(expr.right);
+        }
+
+        public object VisitSetExpr(Expr.Set expr)
+        {
+            object Object = Evaluate(expr.Object);
+
+            if (!(Object is LoxInstance)) {
+                throw new RuntimeError(expr.name,
+                                       "Only instances have fields.");
+            }
+
+            object value = Evaluate(expr.value);
+            ((LoxInstance)Object).Set(expr.name, value);
+            return value;
+        }
+
+        public object VisitThisExpr(Expr.This expr)
+        {
+            return LookUpVariable(expr.keyword, expr);
         }
 
         public object VisitGroupingExpr(Expr.Grouping expr)
@@ -120,8 +139,7 @@ namespace CSLOXProj
                         return (string)left + (string)right;
                     }
 
-                    throw new LoxExceptions(expr.Operator,
-            "Operands must be two numbers or two strings.");
+                    throw new RuntimeError(expr.Operator, "Operands must be two numbers or two strings.");
             }
 
             // Unreachable.
@@ -139,7 +157,7 @@ namespace CSLOXProj
             return null;
         }
 
-        void Resolve(Expr expr, int depth)
+        public void Resolve(Expr expr, int depth)
         {
             locals.Add(expr, depth);
         }
@@ -169,6 +187,23 @@ namespace CSLOXProj
             return null;
         }
 
+        public object VisitClassStmt(Stmt.Class stmt)
+        {
+            environment.Define(stmt.name.lexeme, null);
+
+            Dictionary<string, LoxFunction> methods = new Dictionary<string, LoxFunction>();
+            foreach (Stmt.Function method in stmt.methods)
+            {
+                LoxFunction function = new LoxFunction(method, environment, method.name.lexeme.Equals("init"));
+                methods[method.name.lexeme] = function;
+            }
+
+            LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+
+            environment.Assign(stmt.name, klass);
+            return null;
+        }
+
         public object VisitExpressionStmt(Stmt.Expression stmt)
         {
             Evaluate(stmt.expression);
@@ -177,7 +212,7 @@ namespace CSLOXProj
 
         public object VisitFunctionStmt(Stmt.Function stmt)
         {
-            LoxFunction function = new LoxFunction(stmt, environment);
+            LoxFunction function = new LoxFunction(stmt, environment, false);
             environment.Define(stmt.name.lexeme, function);
             return null;
         }
@@ -257,7 +292,7 @@ namespace CSLOXProj
         private void CheckNumberOperand(Token Operator, object operand)
         {
             if (operand is double) return;
-            throw new LoxExceptions(Operator, "Operand must be a number.");
+            throw new RuntimeError(Operator, "Operand must be a number.");
         }
 
         private void CheckNumberOperands(Token Operator,
@@ -265,7 +300,7 @@ namespace CSLOXProj
         {
             if (left is double && right is double) return;
 
-            throw new LoxExceptions(Operator, "Operands must be numbers.");
+            throw new RuntimeError(Operator, "Operands must be numbers.");
         }
 
         public void Interpret(List<Stmt> statements)
@@ -277,7 +312,7 @@ namespace CSLOXProj
                     Execute(statement);
                 }
             }
-            catch (LoxExceptions error)
+            catch (RuntimeError error)
             {
                 Lox.RuntimeError(error);
             }
@@ -318,17 +353,28 @@ namespace CSLOXProj
                 arguments.Add(Evaluate(argument));
             }
 
-            LoxCallable function = callee as LoxCallable;
+            ILoxCallable function = callee as ILoxCallable;
 
             if (callee == null) {
-                throw new LoxExceptions(expr.paren,"Can only call functions and classes.");
+                throw new RuntimeError(expr.paren,"Can only call functions and classes.");
             }
 
             if (arguments.Count != function.Arity) {
-                throw new LoxExceptions(expr.paren, "Expected " + function.Arity + " arguments but got " + arguments.Count + ".");
+                throw new RuntimeError(expr.paren, "Expected " + function.Arity + " arguments but got " + arguments.Count + ".");
             }
 
             return function.Call(this, arguments);
+        }
+
+        public object VisitGetExpr(Expr.Get expr)
+        {
+            object Object = Evaluate(expr.Object);
+            if (Object is LoxInstance) {
+                return ((LoxInstance)Object).Get(expr.name);
+            }
+
+            throw new RuntimeError(expr.name,
+                "Only instances have properties.");
         }
     }
 }

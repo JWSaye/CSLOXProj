@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CSLOXProj
 {
-    public class Clocks : LoxCallable
+    public class Clocks : ILoxCallable
     {
         public int Arity
         {

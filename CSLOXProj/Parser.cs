@@ -42,7 +42,7 @@ namespace CSLOXProj
 
                 return Statement();
             }
-            catch (ParseError error)
+            catch (ParseError)
             {
                 Synchronize();
                 return null;
@@ -52,17 +52,19 @@ namespace CSLOXProj
         private Stmt ClassDeclaration()
         {
             Token name = Consume(TokenType.IDENTIFIER, "Expect class name.");
+
+            Expr.Variable superclass = null;
             Consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
 
             List<Stmt.Function> methods = new List<Stmt.Function>();
             while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
             {
-                methods.Add(Function("method"));
+                methods.Add((Stmt.Function)Function("method"));
             }
 
             Consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
 
-            return new Stmt.Class(name, methods);
+            return new Stmt.Class(name, superclass, methods);
         }
 
         private Stmt Statement()
@@ -332,17 +334,44 @@ namespace CSLOXProj
             Expr expr = Primary();
 
             while (true) { 
-              if (Match(TokenType.LEFT_PAREN)) {
-                expr = FinishCall(expr);
-              } else {
-                break;
-              }
+                if (Match(TokenType.LEFT_PAREN)) {
+                    expr = FinishCall(expr);
+                }
+
+                else if (Match(TokenType.DOT))
+                {
+                    Token name = Consume(TokenType.IDENTIFIER,
+                        "Expect property name after '.'.");
+                    expr = new Expr.Get(expr, name);
+
+                }
+                else {
+                    break;
+                }
             }
 
             return expr;
         }
 
-         private Expr finishCall(Expr callee) {
+        private Expr FinishCall(Expr callee)
+        {
+            List<Expr> arguments = new List<Expr>();
+
+            if (!Check(TokenType.RIGHT_PAREN))
+            {
+                do
+                {
+                    if (arguments.Count >= 255) Error(Peek(), "Cannot have more than 255 arguments.");
+                    arguments.Add(Expression());
+                } while (Match(TokenType.COMMA));
+            }
+
+            Token paren = Consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
+
+            return new Expr.Call(callee, paren, arguments);
+        }
+
+        private Expr finishCall(Expr callee) {
             List<Expr> arguments = new List<Expr>();
             if (!Check(TokenType.RIGHT_PAREN)) {
                 do {
@@ -369,6 +398,8 @@ namespace CSLOXProj
             {
                 return new Expr.Literal(Previous().literal);
             }
+
+            if (Match(TokenType.THIS)) return new Expr.This(Previous());
 
             if (Match(TokenType.IDENTIFIER))
             {
