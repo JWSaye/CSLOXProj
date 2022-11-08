@@ -8,7 +8,7 @@ namespace CSLOXProj
 {
     public class Environment
     {
-        private Environment enclosing;
+        public Environment enclosing;
         private Dictionary<string, object> values;
 
         public Environment()
