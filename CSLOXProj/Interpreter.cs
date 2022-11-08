@@ -9,8 +9,9 @@ namespace CSLOXProj
     {
         public Environment globals;
         private Environment environment;
+        private readonly Dictionary<Expr, int> locals = new Dictionary<Expr, int>();
 
-        Interpreter() {
+        public Interpreter() {
             globals = new Environment();
             environment = globals;
             DefineNativeFunctions();
@@ -29,7 +30,7 @@ namespace CSLOXProj
 
         public object VisitLogicalExpr(Expr.Logical expr)
         {
-            Object left = Evaluate(expr.left);
+            object left = Evaluate(expr.left);
 
             if (expr.Operator.type == TokenType.OR) {
                 if (IsTruthy(left)) return left;
@@ -64,7 +65,21 @@ namespace CSLOXProj
 
         public object VisitVariableExpr(Expr.Variable expr)
         {
-            return environment.Get(expr.name);
+            return LookUpVariable(expr.name, expr);
+        }
+
+        private object LookUpVariable(Token name, Expr expr)
+        {
+            int? distance = locals[expr];
+
+            if (distance != null)
+            {
+                return environment.GetAt((int)distance, name.lexeme);
+            }
+            else
+            {
+                return globals.Get(name);
+            }
         }
 
         public object VisitBinaryExpr(Expr.Binary expr)
@@ -122,6 +137,11 @@ namespace CSLOXProj
         {
             if(stmt != null) return stmt.Accept(this);
             return null;
+        }
+
+        void Resolve(Expr expr, int depth)
+        {
+            locals.Add(expr, depth);
         }
 
         public void ExecuteBlock(List<Stmt> statements,
@@ -192,7 +212,7 @@ namespace CSLOXProj
 
         public object VisitVarStmt(Stmt.Var stmt)
         {
-            Object value = null;
+            object value = null;
             if (stmt.initializer != null)
             {
                 value = Evaluate(stmt.initializer);
@@ -205,7 +225,17 @@ namespace CSLOXProj
         public object VisitAssignExpr(Expr.Assign expr)
         {
             object value = Evaluate(expr.value);
-            environment.Assign(expr.name, value);
+
+            int? distance = locals[expr];
+            if (distance != null)
+            {
+                environment.AssignAt((int)distance, expr.name, value);
+            }
+            else
+            {
+                globals.Assign(expr.name, value);
+            }
+
             return value;
         }
 

@@ -60,6 +60,11 @@ namespace CSLOXProj
 
             if (hadError) return;
 
+            Resolver resolver = new Resolver(interpreter);
+            resolver.Resolve(statements);
+
+            if (hadError) return;
+
             interpreter.Interpret(statements);
         }
 
