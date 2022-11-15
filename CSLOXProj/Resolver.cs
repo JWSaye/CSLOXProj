@@ -1,20 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSLOXProj
 {
     class Resolver : Expr.IVisitor<object>, Stmt.IVisitor<object> {
         private readonly Interpreter interpreter;
-        private readonly List<Dictionary<string, bool>> scopes;
+        private readonly Stack<Dictionary<string, bool>> scopes;
         private FunctionType currentFunction = FunctionType.NONE;
 
         public Resolver(Interpreter interpreter)
         {
             this.interpreter = interpreter;
-            scopes = new List<Dictionary<string, bool>>();
+            scopes = new Stack<Dictionary<string, bool>>();
         }
 
         private enum FunctionType
@@ -82,11 +80,11 @@ namespace CSLOXProj
             if (stmt.superclass != null)
             {
                 BeginScope();
-                scopes[0]["super"] = true;
+                scopes.Peek()["super"] = true;
             }
 
             BeginScope();
-            scopes[0]["this"] = true;
+            scopes.Peek()["this"] = true;
 
             foreach (Stmt.Function method in stmt.methods)
             {
@@ -272,8 +270,8 @@ namespace CSLOXProj
 
         public object VisitVariableExpr(Expr.Variable expr)
         {
-            if (scopes.Count == 0 &&
-                scopes[0][expr.name.lexeme] == false)
+            if (scopes.Count != 0 &&
+                scopes.Peek()[expr.name.lexeme] == false)
             {
                 Lox.Error(expr.name,
                     "Can't read local variable in its own initializer.");
@@ -285,19 +283,19 @@ namespace CSLOXProj
 
         private void BeginScope()
         {
-            scopes.Append(new Dictionary<string, bool>());
+            scopes.Push(new Dictionary<string, bool>());
         }
 
         private void EndScope()
         {
-            scopes.RemoveAt(scopes.Count);
+            scopes.Pop();
         }
 
         private void Declare(Token name)
         {
             if (scopes.Count == 0) return;
 
-            Dictionary<string, bool> scope = scopes[0];
+            Dictionary<string, bool> scope = scopes.Peek();
 
             if (scope.ContainsKey(name.lexeme))
             {
@@ -311,15 +309,14 @@ namespace CSLOXProj
         private void Define(Token name)
         {
             if (scopes.Count == 0) return;
-            Dictionary<string, bool> scope = scopes[0];
-            scope[name.lexeme] = true;
+            scopes.Peek()[name.lexeme] = true;
         }
 
         private void ResolveLocal(Expr expr, Token name)
         {
             for (int i = scopes.Count - 1; i >= 0; i--)
             {
-                if (scopes[i].ContainsKey(name.lexeme))
+                if (scopes.ElementAt(i).ContainsKey(name.lexeme))
                 {
                     interpreter.Resolve(expr, scopes.Count - 1 - i);
                     return;
