@@ -14,5 +14,7 @@ namespace CSLOXProj
         {
             return DateTime.Now.Second;
         }
+
+        public override string ToString() { return "<native fn>"; }
     }
 }

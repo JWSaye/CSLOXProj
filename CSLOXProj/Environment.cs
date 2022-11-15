@@ -1,30 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace CSLOXProj
-{
-    public class Environment
-    {
+namespace CSLOXProj {
+    public class Environment {
         public Environment enclosing;
-        private Dictionary<string, object> values;
+        private readonly Dictionary<string, object> values;
 
-        public Environment()
-        {
+        public Environment() {
             values = new Dictionary<string, object>();
             enclosing = null;
         }
 
-        public Environment(Environment enclosing)
-        {
+        public Environment(Environment enclosing) {
             this.enclosing = enclosing;
         }
-        public object Get(Token name)
-        {
-            if (values.ContainsKey(name.lexeme))
-            {
+
+        public object Get(Token name) {
+            if (values.ContainsKey(name.lexeme)) {
                 return values[name.lexeme];
             }
 
@@ -34,16 +26,13 @@ namespace CSLOXProj
             throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
         }
 
-        public void Assign(Token name, Object value)
-        {
-            if (values.ContainsKey(name.lexeme))
-            {
+        public void Assign(Token name, object value) {
+            if (values.ContainsKey(name.lexeme)) {
                 values[name.lexeme] = value;
                 return;
             }
 
-            if (enclosing != null)
-            {
+            if (enclosing != null) {
                 enclosing.Assign(name, value);
                 return;
             }
@@ -51,29 +40,24 @@ namespace CSLOXProj
             throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
         }
 
-        public void Define(string name, object value)
-        {
+        public void Define(string name, object value) {
             values.Add(name, value);
         }
 
-        Environment Ancestor(int distance)
-        {
+        public Environment Ancestor(int distance) {
             Environment environment = this;
-            for (int i = 0; i < distance; i++)
-            {
+            for (int i = 0; i < distance; i++) {
                 environment = environment.enclosing;
             }
 
             return environment;
         }
 
-        public object GetAt(int distance, string name)
-        {
+        public object GetAt(int distance, string name) {
             return Ancestor(distance).values[name];
         }
 
-        public void AssignAt(int distance, Token name, object value)
-        {
+        public void AssignAt(int distance, Token name, object value) {
             Ancestor(distance).values[name.lexeme] = value;
         }
     }

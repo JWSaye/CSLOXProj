@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using static CSLOXProj.Expr;
-using static CSLOXProj.Stmt;
 
 namespace CSLOXProj
 {

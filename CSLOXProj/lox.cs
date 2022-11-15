@@ -53,14 +53,14 @@ namespace CSLOXProj
 
         static private void Run(string source)
         {
-            Scanner scanner = new Scanner(source);
+            Scanner scanner = new(source);
             List<Token> tokens = scanner.ScanTokens();
-            Parser parser = new Parser(tokens);
+            Parser parser = new(tokens);
             List<Stmt> statements = parser.Parse();
 
             if (hadError) return;
 
-            Resolver resolver = new Resolver(interpreter);
+            Resolver resolver = new(interpreter);
             resolver.Resolve(statements);
 
             if (hadError) return;

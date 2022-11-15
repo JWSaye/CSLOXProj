@@ -12,7 +12,6 @@ namespace CSLOXProj
 
         public Return(object value) : base()
         {
-            //super(null, null, false, false);
             this.value = value;
         }
     }

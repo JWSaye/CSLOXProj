@@ -3,116 +3,99 @@ using System.Collections.Generic;
 using static CSLOXProj.Expr;
 using static CSLOXProj.Stmt;
 
-namespace CSLOXProj
-{
-    public class Parser
-    {
+namespace CSLOXProj {
+    public class Parser {
         private class ParseError : SystemException { }
         private readonly List<Token> tokens;
         private int current = 0;
 
-        public Parser(List<Token> tokens)
-        {
+        public Parser(List<Token> tokens) {
             this.tokens = tokens;
         }
 
-        public List<Stmt> Parse()
-        {
-            List<Stmt> statements = new List<Stmt>();
-            while (!IsAtEnd())
-            {
+        public List<Stmt> Parse() {
+            List<Stmt> statements = new();
+            while (!IsAtEnd()) {
                 statements.Add(Declaration());
             }
 
             return statements;
         }
 
-        private Expr Expression()
-        {
+        private Expr Expression() {
             return Assignment();
         }
 
-        private Stmt Declaration()
-        {
-            try
-            {
+        private Stmt Declaration() {
+            try {
                 if (Match(TokenType.CLASS)) return ClassDeclaration();
                 if (Match(TokenType.FUN)) return Function("function");
                 if (Match(TokenType.VAR)) return VarDeclaration();
 
                 return Statement();
             }
-            catch (ParseError)
-            {
+            catch (ParseError) {
                 Synchronize();
                 return null;
             }
         }
 
-        private Stmt ClassDeclaration()
-        {
+        private Stmt ClassDeclaration() {
             Token name = Consume(TokenType.IDENTIFIER, "Expect class name.");
 
             Expr.Variable superclass = null;
-            if (Match(TokenType.LESS))
-            {
+            if (Match(TokenType.LESS)) {
                 Consume(TokenType.IDENTIFIER, "Expect superclass name.");
                 superclass = new Expr.Variable(Previous());
             }
 
             Consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
 
-            List<Stmt.Function> methods = new List<Stmt.Function>();
-            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
-            {
-                methods.Add((Stmt.Function)Function("method"));
+            List<Function> methods = new();
+            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd()) {
+                methods.Add(Function("method"));
             }
 
             Consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
 
-            return new Stmt.Class(name, superclass, methods);
+            return new Class(name, superclass, methods);
         }
 
-        private Stmt Statement()
-        {
+        private Stmt Statement() {
             if (Match(TokenType.FOR)) return ForStatement();
             if (Match(TokenType.IF)) return IfStatement();
             if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.RETURN)) return ReturnStatement();
             if (Match(TokenType.WHILE)) return WhileStatement();
-            if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(Block());
+            if (Match(TokenType.LEFT_BRACE)) return new Block(Block());
 
             return ExpressionStatement();
         }
 
-        private Stmt IfStatement()
-        {
+        private Stmt IfStatement() {
             Consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
             Expr condition = Expression();
             Consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
 
             Stmt thenBranch = Statement();
             Stmt elseBranch = null;
-            if (Match(TokenType.ELSE))
-            {
+            if (Match(TokenType.ELSE)) {
                 elseBranch = Statement();
             }
 
-            return new Stmt.If(condition, thenBranch, elseBranch);
+            return new If(condition, thenBranch, elseBranch);
         }
 
-        private Stmt PrintStatement()
-        {
+        private Stmt PrintStatement() {
             Expr value = Expression();
             Consume(TokenType.SEMICOLON, "Expect ';' after value.");
-            return new Stmt.Print(value);
+            return new Print(value);
         }
 
-        private Stmt ReturnStatement()
-        {
+        private Stmt ReturnStatement() {
             Token keyword = Previous();
             Expr value = null;
-            if (!Check(TokenType.SEMICOLON))
-            {
+            if (!Check(TokenType.SEMICOLON)) {
                 value = Expression();
             }
 
@@ -120,58 +103,48 @@ namespace CSLOXProj
             return new Stmt.Return(keyword, value);
         }
 
-        private Stmt VarDeclaration()
-        {
+        private Stmt VarDeclaration() {
             Token name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
 
             Expr initializer = null;
-            if (Match(TokenType.EQUAL))
-            {
+            if (Match(TokenType.EQUAL)) {
                 initializer = Expression();
             }
 
             Consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
-            return new Stmt.Var(name, initializer);
+            return new Var(name, initializer);
         }
 
-        private Stmt ExpressionStatement()
-        {
+        private Stmt ExpressionStatement() {
             Expr expr = Expression();
             Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
-            return new Stmt.Expression(expr);
+            return new Expression(expr);
         }
 
-        private Stmt.Function Function(String kind)
-        {
+        private Function Function(string kind) {
             Token name = Consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
             Consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
-            List<Token> parameters = new List<Token>();
-            if (!Check(TokenType.RIGHT_PAREN))
-            {
-                do
-                {
-                    if (parameters.Count >= 255)
-                    {
+            List<Token> parameters = new();
+            if (!Check(TokenType.RIGHT_PAREN)) {
+                do {
+                    if (parameters.Count >= 255) {
                         Error(Peek(), "Can't have more than 255 parameters.");
                     }
 
-                    parameters.Add(
-                        Consume(TokenType.IDENTIFIER, "Expect parameter name."));
+                    parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
                 } while (Match(TokenType.COMMA));
             }
             Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
 
             Consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
             List<Stmt> body = Block();
-            return new Stmt.Function(name, parameters, body);
+            return new Function(name, parameters, body);
         }
 
-        private List<Stmt> Block()
-        {
-            List<Stmt> statements = new List<Stmt>();
+        private List<Stmt> Block() {
+            List<Stmt> statements = new();
 
-            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
-            {
+            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd()) {
                 statements.Add(Declaration());
             }
 
@@ -179,19 +152,24 @@ namespace CSLOXProj
             return statements;
         }
 
-        private Expr Assignment()
-        {
+        private Expr Assignment() {
             Expr expr = Or();
 
-            if (Match(TokenType.EQUAL))
-            {
+            if (Match(TokenType.EQUAL)) {
                 Token equals = Previous();
                 Expr value = Assignment();
 
-                if (expr is Expr.Variable) {
-                    Token name = ((Expr.Variable)expr).name;
-                    return new Expr.Assign(name, value);
+                if (expr is Variable variable) {
+                    Token name = variable.name;
+                    return new Assign(name, value);
                 }
+                
+                else if (expr is Get get)
+                {
+                    return new Set(get.Object, get.name, value);
+
+                }
+
 
                 Error(equals, "Invalid assignment target.");
             }
@@ -199,12 +177,10 @@ namespace CSLOXProj
             return expr;
         }
 
-        private Expr Or()
-        {
+        private Expr Or() {
             Expr expr = And();
 
-            while (Match(TokenType.OR))
-            {
+            while (Match(TokenType.OR)) {
                 Token Operator = Previous();
                 Expr right = And();
                 expr = new Expr.Logical(expr, Operator, right);
@@ -213,12 +189,10 @@ namespace CSLOXProj
             return expr;
         }
 
-        private Expr And()
-        {
+        private Expr And() {
             Expr expr = Equality();
 
-            while (Match(TokenType.AND))
-            {
+            while (Match(TokenType.AND)) {
                 Token Operator = Previous();
                 Expr right = Equality();
                 expr = new Expr.Logical(expr, Operator, right);
@@ -227,12 +201,10 @@ namespace CSLOXProj
             return expr;
         }
 
-        private Expr Equality()
-        {
+        private Expr Equality() {
             Expr expr = Comparison();
 
-            while (Match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))
-            {
+            while (Match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
                 Token Operator = Previous();
                 Expr right = Comparison();
                 expr = new Expr.Binary(expr, Operator, right);
@@ -241,12 +213,9 @@ namespace CSLOXProj
             return expr;
         }
 
-        private bool Match(params TokenType[] types)
-        {
-            foreach (TokenType type in types)
-            {
-                if (Check(type))
-                {
+        private bool Match(params TokenType[] types) {
+            foreach (TokenType type in types) {
+                if (Check(type)) {
                     Advance();
                     return true;
                 }
@@ -255,39 +224,32 @@ namespace CSLOXProj
             return false;
         }
 
-        private bool Check(TokenType type)
-        {
+        private bool Check(TokenType type) {
             if (IsAtEnd()) return false;
             return Peek().type == type;
         }
 
-        private Token Advance()
-        {
+        private Token Advance() {
             if (!IsAtEnd()) current++;
             return Previous();
         }
 
-        private bool IsAtEnd()
-        {
+        private bool IsAtEnd() {
             return Peek().type == TokenType.EOF;
         }
 
-        private Token Peek()
-        {
+        private Token Peek() {
             return tokens[current];
         }
 
-        private Token Previous()
-        {
+        private Token Previous() {
             return tokens[current - 1];
         }
 
-        private Expr Comparison()
-        {
+        private Expr Comparison() {
             Expr expr = Term();
 
-            while (Match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL))
-            {
+            while (Match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)) {
                 Token Operator = Previous();
                 Expr right = Term();
                 expr = new Expr.Binary(expr, Operator, right);
@@ -296,12 +258,10 @@ namespace CSLOXProj
             return expr;
         }
 
-        private Expr Term()
-        {
+        private Expr Term() {
             Expr expr = Factor();
 
-            while (Match(TokenType.MINUS, TokenType.PLUS))
-            {
+            while (Match(TokenType.MINUS, TokenType.PLUS)) {
                 Token Operator = Previous();
                 Expr right = Factor();
                 expr = new Expr.Binary(expr, Operator, right);
@@ -310,12 +270,10 @@ namespace CSLOXProj
             return expr;
         }
 
-        private Expr Factor()
-        {
+        private Expr Factor() {
             Expr expr = Unary();
 
-            while (Match(TokenType.SLASH, TokenType.STAR))
-            {
+            while (Match(TokenType.SLASH, TokenType.STAR)) {
                 Token Operator = Previous();
                 Expr right = Unary();
                 expr = new Expr.Binary(expr, Operator, right);
@@ -324,10 +282,8 @@ namespace CSLOXProj
             return expr;
         }
 
-        private Expr Unary()
-        {
-            if (Match(TokenType.BANG, TokenType.MINUS))
-            {
+        private Expr Unary() {
+            if (Match(TokenType.BANG, TokenType.MINUS)) {
                 Token Operator = Previous();
                 Expr right = Unary();
                 return new Expr.Unary(Operator, right);
@@ -344,10 +300,8 @@ namespace CSLOXProj
                     expr = FinishCall(expr);
                 }
 
-                else if (Match(TokenType.DOT))
-                {
-                    Token name = Consume(TokenType.IDENTIFIER,
-                        "Expect property name after '.'.");
+                else if (Match(TokenType.DOT)) {
+                    Token name = Consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
                     expr = new Expr.Get(expr, name);
 
                 }
@@ -361,7 +315,7 @@ namespace CSLOXProj
 
         private Expr FinishCall(Expr callee)
         {
-            List<Expr> arguments = new List<Expr>();
+            List<Expr> arguments = new();
 
             if (!Check(TokenType.RIGHT_PAREN))
             {
@@ -377,68 +331,44 @@ namespace CSLOXProj
             return new Expr.Call(callee, paren, arguments);
         }
 
-        private Expr finishCall(Expr callee) {
-            List<Expr> arguments = new List<Expr>();
-            if (!Check(TokenType.RIGHT_PAREN)) {
-                do {
-                    if (arguments.Count >= 255) {
-                        Error(Peek(), "Can't have more than 255 arguments.");
-                    }
-                    arguments.Add(Expression());
-                } while (Match(TokenType.COMMA));
+        private Expr Primary(){
+            if (Match(TokenType.FALSE)) return new Literal(false);
+            if (Match(TokenType.TRUE)) return new Literal(true);
+            if (Match(TokenType.NIL)) return new Literal(null);
+
+            if (Match(TokenType.NUMBER, TokenType.STRING)){
+                return new Literal(Previous().literal);
             }
 
-            Token paren = Consume(TokenType.RIGHT_PAREN,
-                                  "Expect ')' after arguments.");
-
-            return new Expr.Call(callee, paren, arguments);
-         }
-
-        private Expr Primary()
-        {
-            if (Match(TokenType.FALSE)) return new Expr.Literal(false);
-            if (Match(TokenType.TRUE)) return new Expr.Literal(true);
-            if (Match(TokenType.NIL)) return new Expr.Literal(null);
-
-            if (Match(TokenType.NUMBER, TokenType.STRING))
-            {
-                return new Expr.Literal(Previous().literal);
-            }
-
-            if (Match(TokenType.SUPER))
-            {
+            if (Match(TokenType.SUPER)){
                 Token keyword = Previous();
                 Consume(TokenType.DOT, "Expect '.' after 'super'.");
                 Token method = Consume(TokenType.IDENTIFIER, "Expect superclass method name.");
-                return new Expr.Super(keyword, method);
+                return new Super(keyword, method);
             }
 
-            if (Match(TokenType.THIS)) return new Expr.This(Previous());
+            if (Match(TokenType.THIS)) return new This(Previous());
 
-            if (Match(TokenType.IDENTIFIER))
-            {
-                return new Expr.Variable(Previous());
+            if (Match(TokenType.IDENTIFIER)){
+                return new Variable(Previous());
             }
 
-            if (Match(TokenType.LEFT_PAREN))
-            {
+            if (Match(TokenType.LEFT_PAREN)){
                 Expr expr = Expression();
                 Consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
-                return new Expr.Grouping(expr);
+                return new Grouping(expr);
             }
 
             throw Error(Peek(), "Expect expression.");
         }
 
-        private Token Consume(TokenType type, String message)
-        {
+        private Token Consume(TokenType type, string message){
             if (Check(type)) return Advance();
 
             throw Error(Peek(), message);
         }
 
-        private ParseError Error(Token token, String message)
-        {
+        private ParseError Error(Token token, string message){
             Lox.Error(token, message);
             return new ParseError();
         }
