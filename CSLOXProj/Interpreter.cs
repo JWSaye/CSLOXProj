@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using static CSLOXProj.Stmt;
 
 namespace CSLOXProj {
-    public class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object> {
+    public class Interpreter : Expr.IVisitor<object>, IVisitor<object> {
         public Environment globals;
         private Environment environment;
         private readonly Dictionary<Expr, int> locals = new();
@@ -155,7 +155,7 @@ namespace CSLOXProj {
         }
 
         public void Resolve(Expr expr, int depth) {
-            locals.Add(expr, depth);
+            locals[expr] = depth;
         }
 
         public void ExecuteBlock(List<Stmt> statements, Environment environment) {

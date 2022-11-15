@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 
-namespace CSLOXProj
-{
-    public class LoxFunction : ILoxCallable
-    {
+namespace CSLOXProj {
+    public class LoxFunction : ILoxCallable {
         private readonly Stmt.Function declaration;
         private readonly Environment closure;
         private readonly bool isInitializer;
@@ -20,8 +18,7 @@ namespace CSLOXProj
             return new LoxFunction(declaration, environment, isInitializer);
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return "<fn " + declaration.name.lexeme + ">";
         }
 
@@ -44,10 +41,8 @@ namespace CSLOXProj
             return null;
         }
 
-        public int Arity
-        {
-            get
-            {
+        public int Arity {
+            get {
                 return declaration.Params.Count;
             }
         }

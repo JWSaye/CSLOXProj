@@ -2,8 +2,7 @@ using System.Collections.Generic;
 
 namespace CSLOXProj { 
     public abstract class Expr {
-        public interface IVisitor<R> 
-        {
+        public interface IVisitor<R> {
             R VisitAssignExpr(Assign expr);
             R VisitBinaryExpr(Binary expr);
             R VisitCallExpr(Call expr);
@@ -69,15 +68,13 @@ namespace CSLOXProj {
             public readonly Expr right;
         }
 
-        public class Assign : Expr
-        {
+        public class Assign : Expr {
             public Assign(Token name, Expr value) {
                 this.name = name;
                 this.value = value;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitAssignExpr(this);
             }
 
@@ -85,16 +82,14 @@ namespace CSLOXProj {
             public readonly Expr value;
         }
         
-        public class Call : Expr
-        {
+        public class Call : Expr {
             public Call(Expr callee, Token paren, List<Expr> arguments) {
                 this.callee = callee;
                 this.paren = paren;
                 this.arguments = arguments;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitCallExpr(this);
             }
 
@@ -103,15 +98,13 @@ namespace CSLOXProj {
             public readonly List<Expr> arguments;
         }
         
-        public class Get : Expr
-        {
+        public class Get : Expr {
             public Get(Expr Object, Token name) {
                 this.Object = Object;
                 this.name = name;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitGetExpr(this);
             }
 
@@ -119,17 +112,14 @@ namespace CSLOXProj {
             public readonly Token name;
           }
         
-        public class Logical : Expr
-        {
-            public Logical(Expr left, Token Operator, Expr right)
-            {
+        public class Logical : Expr {
+            public Logical(Expr left, Token Operator, Expr right) {
                 this.left = left;
                 this.Operator = Operator;
                 this.right = right;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitLogicalExpr(this);
             }
 
@@ -138,8 +128,7 @@ namespace CSLOXProj {
             public readonly Expr right;
         }
         
-        public class Set : Expr
-        {
+        public class Set : Expr {
             public Set(Expr Object, Token name, Expr value) {
                 this.Object = Object;
                 this.name = name;
@@ -155,8 +144,7 @@ namespace CSLOXProj {
             public readonly Expr value;
         }
         
-        public class Super : Expr
-        {
+        public class Super : Expr {
             public Super(Token keyword, Token method) {
                 this.keyword = keyword;
                 this.method = method;
@@ -171,8 +159,7 @@ namespace CSLOXProj {
             public readonly Token method;
         }
         
-        public class This : Expr
-        {
+        public class This : Expr {
             public This(Token keyword) {
                 this.keyword = keyword;
             }
@@ -185,8 +172,7 @@ namespace CSLOXProj {
             public readonly Token keyword;
         }
         
-        public class Variable : Expr
-        {
+        public class Variable : Expr {
             public Variable(Token name) {
                 this.name = name;
             }
@@ -199,8 +185,6 @@ namespace CSLOXProj {
             public readonly Token name;
         }
 
-        
-
-public abstract R Accept<R>(IVisitor<R> visitor);
+        public abstract R Accept<R>(IVisitor<R> visitor);
     }
 }

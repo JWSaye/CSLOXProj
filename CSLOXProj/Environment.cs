@@ -7,7 +7,7 @@ namespace CSLOXProj {
         private readonly Dictionary<string, object> values;
 
         public Environment() {
-            values = new Dictionary<string, object>();
+            values = new();
             enclosing = null;
         }
 
@@ -41,7 +41,7 @@ namespace CSLOXProj {
         }
 
         public void Define(string name, object value) {
-            values.Add(name, value);
+            values[name] = value;
         }
 
         public Environment Ancestor(int distance) {

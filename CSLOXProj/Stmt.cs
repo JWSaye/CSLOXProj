@@ -1,11 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace CSLOXProj
-{
-    public abstract class Stmt
-    {
-        public interface IVisitor<R>
-        {
+namespace CSLOXProj {
+    public abstract class Stmt {
+        public interface IVisitor<R> {
             R VisitBlockStmt(Block stmt);
             R VisitClassStmt(Class stmt);
             R VisitExpressionStmt(Expression stmt);
@@ -18,22 +15,19 @@ namespace CSLOXProj
         }
 
         // Nested Stmt classes here...
-        public class Block : Stmt
-        {
+        public class Block : Stmt {
             public Block(List<Stmt> statements) {
                 this.statements = statements;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitBlockStmt(this);
             }
 
             public readonly List<Stmt> statements;
         }
         
-        public class Class : Stmt
-        {
+        public class Class : Stmt {
             public Class(Token name,
                   Expr.Variable superclass,
                   List<Stmt.Function> methods) {
@@ -41,8 +35,7 @@ namespace CSLOXProj
                 this.superclass = superclass;
                 this.methods = methods;
             }
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitClassStmt(this);
             }
 
@@ -51,29 +44,25 @@ namespace CSLOXProj
             public readonly List<Stmt.Function> methods;
         }
         
-        public class Expression : Stmt
-        {
+        public class Expression : Stmt {
             public Expression(Expr expression) {
               this.expression = expression;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitExpressionStmt(this);
             }
 
             public readonly Expr expression;
         }
-        public class If : Stmt
-        {
+        public class If : Stmt {
             public If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
               this.condition = condition;
               this.thenBranch = thenBranch;
               this.elseBranch = elseBranch;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitIfStmt(this);
             }
 
@@ -82,29 +71,25 @@ namespace CSLOXProj
             public readonly Stmt elseBranch;
         }
 
-        public class Print : Stmt
-        {
+        public class Print : Stmt {
             public Print(Expr expression) {
                 this.expression = expression;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitPrintStmt(this);
             }
 
             public readonly Expr expression;
         }
         
-        public class Return : Stmt
-        {
+        public class Return : Stmt {
             public Return(Token keyword, Expr value) {
                 this.keyword = keyword;
                 this.value = value;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitReturnStmt(this);
             }
 
@@ -112,15 +97,13 @@ namespace CSLOXProj
             public readonly Expr value;
         }
         
-        public class Var : Stmt
-        {
+        public class Var : Stmt {
             public Var(Token name, Expr initializer) {
                 this.name = name;
                 this.initializer = initializer;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitVarStmt(this);
             }
 
@@ -128,15 +111,13 @@ namespace CSLOXProj
             public readonly Expr initializer;
         }
 
-        public class While : Stmt
-        {
+        public class While : Stmt {
             public While(Expr condition, Stmt body) {
                 this.condition = condition;
                 this.body = body;
             }
 
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
+            public override R Accept<R>(IVisitor<R> visitor) {
                 return visitor.VisitWhileStmt(this);
             }
 
@@ -144,8 +125,7 @@ namespace CSLOXProj
             public readonly Stmt body;
         }
 
-        public class Function : Stmt
-        {
+        public class Function : Stmt {
             public Function(Token name, List<Token> Params, List<Stmt> body) {
               this.name = name;
               this.Params = Params;

@@ -1,26 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CSLOXProj
-{
-    public class Scanner
-    {
-        private readonly String source;
-        private readonly List<Token> tokens = new List<Token>();
+namespace CSLOXProj {
+    public class Scanner {
+        private readonly string source;
+        private readonly List<Token> tokens = new();
         private int start = 0;
         private int current = 0;
         private int line = 1;
 
-        public Scanner(String source)
-        {
+        public Scanner(string source) {
             this.source = source;
         }
 
-        public List<Token> ScanTokens()
-        {
-            while (!IsAtEnd())
-            {
-                // We are at the beginning of the next lexeme.
+        public List<Token> ScanTokens() {
+            while (!IsAtEnd()) {
                 start = current;
                 ScanToken();
             }
@@ -29,16 +23,13 @@ namespace CSLOXProj
             return tokens;
         }
 
-        private bool IsAtEnd()
-        {
+        private bool IsAtEnd() {
             return current >= source.Length;
         }
 
-        private void ScanToken()
-        {
+        private void ScanToken() {
             char c = Advance();
-            switch (c)
-            {
+            switch (c) {
                 case '(': AddToken(TokenType.LEFT_PAREN); break;
                 case ')': AddToken(TokenType.RIGHT_PAREN); break;
                 case '{': AddToken(TokenType.LEFT_BRACE); break;
@@ -62,13 +53,11 @@ namespace CSLOXProj
                     AddToken(Match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
                     break;
                 case '/':
-                    if (Match('/'))
-                    {
+                    if (Match('/')) {
                         // A comment goes until the end of the line.
                         while (Peek() != '\n' && !IsAtEnd()) Advance();
                     }
-                    else
-                    {
+                    else {
                         AddToken(TokenType.SLASH);
                     }
                     break;
@@ -84,41 +73,34 @@ namespace CSLOXProj
                 case '"': String(); break;
 
                 default:
-                    if (IsDigit(c))
-                    {
+                    if (IsDigit(c)) {
                         Number();
                     }
-                    else if (IsAlpha(c))
-                    {
+                    else if (IsAlpha(c)) {
                         Identifier();
 
                     }
-                    else
-                    {
+                    else {
                         Lox.Error(line, "Unexpected character.");
                     }            
                     break;
             }
         }
 
-        private char Advance()
-        {
+        private char Advance() {
             return source[current++];
         }
 
-        private void AddToken(TokenType type)
-        {
+        private void AddToken(TokenType type) {
             AddToken(type, null);
         }
 
-        private void AddToken(TokenType type, Object literal)
-        {
+        private void AddToken(TokenType type, object literal) {
             string text = source.Substring(start, current-start);
             tokens.Add(new Token(type, text, literal, line));
         }
 
-        private bool Match(char expected)
-        {
+        private bool Match(char expected) {
             if (IsAtEnd()) return false;
             if (source[current] != expected) return false;
 
@@ -126,14 +108,12 @@ namespace CSLOXProj
             return true;
         }
 
-        private char Peek()
-        {
+        private char Peek() {
             if (IsAtEnd()) return '\0';
             return source[current];
         }
 
-        private void String () 
-        {
+        private void String() {
             while (Peek() != '"' && !IsAtEnd()) {
                 if (Peek() == '\n') line++;
                 Advance();
@@ -152,76 +132,68 @@ namespace CSLOXProj
             AddToken(TokenType.STRING, value);
         }
 
-        private bool IsDigit(char c)
-        {
+        private bool IsDigit(char c) {
             return c >= '0' && c <= '9';
         }
 
-        private void Number()
-        {
+        private void Number() {
             while (IsDigit(Peek())) Advance();
 
             // Look for a fractional part.
-            if (Peek() == '.' && IsDigit(PeekNext()))
-            {
+            if (Peek() == '.' && IsDigit(PeekNext())) {
                 // Consume the "."
                 Advance();
 
                 while (IsDigit(Peek())) Advance();
             }
 
-            AddToken(TokenType.NUMBER,
-                double.Parse(source.Substring(start, current-start)));
+            AddToken(TokenType.NUMBER, double.Parse(source.Substring(start, current-start)));
         }
 
-        private char PeekNext()
-        {
+        private char PeekNext() {
             if (current + 1 >= source.Length) return '\0';
             return source[current + 1];
         }
 
-        private void Identifier()
-        {
+        private void Identifier() {
             while (IsAlphaNumeric(Peek())) Advance();
 
-            String text = source.Substring(start, current-start);
-            TokenType type;
-            if (!keywords.TryGetValue(text, out type)) type = TokenType.IDENTIFIER;
+            string text = source.Substring(start, current-start);
+            if (!keywords.TryGetValue(text, out TokenType type)) type = TokenType.IDENTIFIER;
             AddToken(type);
         }
 
-        private bool IsAlpha(char c)
-        {
+        private bool IsAlpha(char c) {
             return (c >= 'a' && c <= 'z') ||
                    (c >= 'A' && c <= 'Z') ||
                     c == '_';
         }
 
-        private bool IsAlphaNumeric(char c)
-        {
+        private bool IsAlphaNumeric(char c) {
             return IsAlpha(c) || IsDigit(c);
         }
 
         private static readonly Dictionary<string, TokenType> keywords;
 
         static Scanner(){
-            keywords = new Dictionary<string, TokenType>();
-            keywords.Add("and",    TokenType.AND);
-            keywords.Add("class",  TokenType.CLASS);
-            keywords.Add("else",   TokenType.ELSE);
-            keywords.Add("false",  TokenType.FALSE);
-            keywords.Add("for",    TokenType.FOR);
-            keywords.Add("fun",    TokenType.FUN);
-            keywords.Add("if",     TokenType.IF);
-            keywords.Add("nil",    TokenType.NIL);
-            keywords.Add("or",     TokenType.OR);
-            keywords.Add("print",  TokenType.PRINT);
-            keywords.Add("return", TokenType.RETURN);
-            keywords.Add("super",  TokenType.SUPER);
-            keywords.Add("this",   TokenType.THIS);
-            keywords.Add("true",   TokenType.TRUE);
-            keywords.Add("var",    TokenType.VAR);
-            keywords.Add("while",  TokenType.WHILE);
-       }
+            keywords = new Dictionary<string, TokenType> {
+                { "and", TokenType.AND },
+                { "class", TokenType.CLASS },
+                { "else", TokenType.ELSE },
+                { "false", TokenType.FALSE },
+                { "for", TokenType.FOR },
+                { "fun", TokenType.FUN },
+                { "if", TokenType.IF },
+                { "nil", TokenType.NIL },
+                { "or", TokenType.OR },
+                { "print", TokenType.PRINT },
+                { "return", TokenType.RETURN },
+                { "super", TokenType.SUPER },
+                { "this", TokenType.THIS },
+                { "true", TokenType.TRUE },
+                { "var", TokenType.VAR },
+                { "while", TokenType.WHILE }
+            };
+        }
 }
 }

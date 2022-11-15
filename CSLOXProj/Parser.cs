@@ -183,7 +183,7 @@ namespace CSLOXProj {
             while (Match(TokenType.OR)) {
                 Token Operator = Previous();
                 Expr right = And();
-                expr = new Expr.Logical(expr, Operator, right);
+                expr = new Logical(expr, Operator, right);
             }
 
             return expr;
@@ -195,7 +195,7 @@ namespace CSLOXProj {
             while (Match(TokenType.AND)) {
                 Token Operator = Previous();
                 Expr right = Equality();
-                expr = new Expr.Logical(expr, Operator, right);
+                expr = new Logical(expr, Operator, right);
             }
 
             return expr;
@@ -207,7 +207,7 @@ namespace CSLOXProj {
             while (Match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
                 Token Operator = Previous();
                 Expr right = Comparison();
-                expr = new Expr.Binary(expr, Operator, right);
+                expr = new Binary(expr, Operator, right);
             }
 
             return expr;
@@ -252,7 +252,7 @@ namespace CSLOXProj {
             while (Match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)) {
                 Token Operator = Previous();
                 Expr right = Term();
-                expr = new Expr.Binary(expr, Operator, right);
+                expr = new Binary(expr, Operator, right);
             }
 
             return expr;
@@ -264,7 +264,7 @@ namespace CSLOXProj {
             while (Match(TokenType.MINUS, TokenType.PLUS)) {
                 Token Operator = Previous();
                 Expr right = Factor();
-                expr = new Expr.Binary(expr, Operator, right);
+                expr = new Binary(expr, Operator, right);
             }
 
             return expr;
@@ -276,7 +276,7 @@ namespace CSLOXProj {
             while (Match(TokenType.SLASH, TokenType.STAR)) {
                 Token Operator = Previous();
                 Expr right = Unary();
-                expr = new Expr.Binary(expr, Operator, right);
+                expr = new Binary(expr, Operator, right);
             }
 
             return expr;
@@ -286,7 +286,7 @@ namespace CSLOXProj {
             if (Match(TokenType.BANG, TokenType.MINUS)) {
                 Token Operator = Previous();
                 Expr right = Unary();
-                return new Expr.Unary(Operator, right);
+                return new Unary(Operator, right);
             }
 
             return Call();
@@ -302,7 +302,7 @@ namespace CSLOXProj {
 
                 else if (Match(TokenType.DOT)) {
                     Token name = Consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
-                    expr = new Expr.Get(expr, name);
+                    expr = new Get(expr, name);
 
                 }
                 else {
@@ -328,7 +328,7 @@ namespace CSLOXProj {
 
             Token paren = Consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
 
-            return new Expr.Call(callee, paren, arguments);
+            return new Call(callee, paren, arguments);
         }
 
         private Expr Primary(){
@@ -373,16 +373,13 @@ namespace CSLOXProj {
             return new ParseError();
         }
 
-        private void Synchronize()
-        {
+        private void Synchronize() {
             Advance();
 
-            while (!IsAtEnd())
-            {
+            while (!IsAtEnd()) {
                 if (Previous().type == TokenType.SEMICOLON) return;
 
-                switch (Peek().type)
-                {
+                switch (Peek().type) {
                     case TokenType.CLASS:
                     case TokenType.FUN:
                     case TokenType.VAR:
@@ -398,64 +395,57 @@ namespace CSLOXProj {
             }
         }
 
-        private Stmt WhileStatement()
-        {
+        private Stmt WhileStatement() {
             Consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
             Expr condition = Expression();
             Consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
             Stmt body = Statement();
 
-            return new Stmt.While(condition, body);
+            return new While(condition, body);
         }
 
-        private Stmt ForStatement()
-        {
+        private Stmt ForStatement() {
             Consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
-
             Stmt initializer;
-            if (Match(TokenType.SEMICOLON))
-            {
+
+            if (Match(TokenType.SEMICOLON)) {
                 initializer = null;
             }
-            else if (Match(TokenType.VAR))
-            {
+            else if (Match(TokenType.VAR)) {
                 initializer = VarDeclaration();
             }
-            else
-            {
+            else {
                 initializer = ExpressionStatement();
             }
 
             Expr condition = null;
-            if (!Check(TokenType.SEMICOLON))
-            {
+
+            if (!Check(TokenType.SEMICOLON)) {
                 condition = Expression();
             }
-            Consume(TokenType.SEMICOLON, "Expect ';' after loop condition.");
 
+            Consume(TokenType.SEMICOLON, "Expect ';' after loop condition.");
             Expr increment = null;
-            if (!Check(TokenType.RIGHT_PAREN))
-            {
+
+            if (!Check(TokenType.RIGHT_PAREN)) {
                 increment = Expression();
             }
-            Consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
 
+            Consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
             Stmt body = Statement();
 
-            if (increment != null)
-            {
-                body = new Stmt.Block(
+            if (increment != null) {
+                body = new Block(
                     new List<Stmt>(new[] {
                         body,
-                        new Stmt.Expression(increment) }));
+                        new Expression(increment) }));
             }
 
-            if (condition == null) condition = new Expr.Literal(true);
-            body = new Stmt.While(condition, body);
+            condition ??= new Literal(true);
+            body = new While(condition, body);
 
-            if (initializer != null)
-            {
-                body = new Stmt.Block(new List<Stmt>(new[] { initializer, body }));
+            if (initializer != null) {
+                body = new Block(new List<Stmt>(new[] { initializer, body }));
             }
 
             return body;

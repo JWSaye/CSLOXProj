@@ -1,15 +1,38 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace CSLOXProj {
+
+    public class Scope : Dictionary<string, bool> {
+    }
+
+    public class ScopeStack : List<Scope> {
+        public Scope Peek() {
+            if (Count == 0)
+            {
+                return null;
+            }
+            return this[0];
+        }
+
+
+        public void Pop() {
+            RemoveAt(0);
+        }
+
+        public void Push(Scope scope) {
+            Insert(0, scope);
+        }
+    }
     class Resolver : Expr.IVisitor<object>, Stmt.IVisitor<object> {
         private readonly Interpreter interpreter;
-        private readonly Stack<Dictionary<string, bool>> scopes;
+        private readonly ScopeStack scopes;
         private FunctionType currentFunction = FunctionType.NONE;
 
         public Resolver(Interpreter interpreter) {
             this.interpreter = interpreter;
-            scopes = new Stack<Dictionary<string, bool>>();
+            scopes = new ScopeStack();
         }
 
         private enum FunctionType {
@@ -29,8 +52,7 @@ namespace CSLOXProj {
         private ClassType currentClass = ClassType.NONE;
 
         public void Resolve(List<Stmt> statements) {
-            foreach(Stmt statement in statements)
-            {
+            foreach(Stmt statement in statements) {
                 Resolve(statement);
             }
         }
@@ -152,6 +174,7 @@ namespace CSLOXProj {
 
         public object VisitAssignExpr(Expr.Assign expr) {
             Resolve(expr.value);
+            Console.WriteLine("Assigning");
             ResolveLocal(expr, expr.name);
             return null;
         }
@@ -207,6 +230,7 @@ namespace CSLOXProj {
                 Lox.Error(expr.keyword, "Can't use 'super' in a class with no superclass.");
             }
 
+            Console.WriteLine("Super");
             ResolveLocal(expr, expr.keyword);
             return null;
         }
@@ -217,6 +241,7 @@ namespace CSLOXProj {
                 return null;
             }
 
+            Console.WriteLine("This");
             ResolveLocal(expr, expr.keyword);
             return null;
         }
@@ -231,12 +256,14 @@ namespace CSLOXProj {
                 Lox.Error(expr.name, "Can't read local variable in its own initializer.");
             }
 
+            Console.WriteLine("Variable");
             ResolveLocal(expr, expr.name);
             return null;
         }
 
         private void BeginScope() {
-            scopes.Push(new Dictionary<string, bool>());
+            Scope scope = new();
+            scopes.Push(scope);
         }
 
         private void EndScope() {
@@ -246,7 +273,7 @@ namespace CSLOXProj {
         private void Declare(Token name) {
             if (scopes.Count == 0) return;
 
-            Dictionary<string, bool> scope = scopes.Peek();
+            Scope scope = scopes.Peek();
 
             if (scope.ContainsKey(name.lexeme))
             {
@@ -263,7 +290,7 @@ namespace CSLOXProj {
 
         private void ResolveLocal(Expr expr, Token name) {
             for (int i = scopes.Count - 1; i >= 0; i--) {
-                if (scopes.ElementAt(i).ContainsKey(name.lexeme)) {
+                if (scopes[i].ContainsKey(name.lexeme)) {
                     interpreter.Resolve(expr, scopes.Count - 1 - i);
                     return;
                 }
@@ -275,10 +302,12 @@ namespace CSLOXProj {
             currentFunction = type;
 
             BeginScope();
+
             foreach(Token param in function.Params) {
                 Declare(param);
                 Define(param);
             }
+
             Resolve(function.body);
             EndScope();
 

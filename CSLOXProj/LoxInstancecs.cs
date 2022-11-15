@@ -21,7 +21,7 @@ namespace CSLOXProj {
         }
 
         public void Set(Token name, object value) {
-            fields.Add(name.lexeme, value);
+            fields[name.lexeme] = value;
         }
 
         public override string ToString() {
