@@ -3,18 +3,18 @@ using System.Collections.Generic;
 namespace CSLOXProj { 
     public abstract class Expr {
         public interface IVisitor<R> {
-            R VisitAssignExpr(Assign expr);
-            R VisitBinaryExpr(Binary expr);
-            R VisitCallExpr(Call expr);
-            R VisitGetExpr(Get expr);
-            R VisitGroupingExpr(Grouping expr);
-            R VisitLiteralExpr(Literal expr);
-            R VisitLogicalExpr(Logical expr);
-            R VisitSetExpr(Set expr);
-            R VisitSuperExpr(Super expr);
-            R VisitThisExpr(This expr);
-            R VisitUnaryExpr(Unary expr);
-            R VisitVariableExpr(Variable expr);
+            R Visit(Assign expr);
+            R Visit(Binary expr);
+            R Visit(Call expr);
+            R Visit(Get expr);
+            R Visit(Grouping expr);
+            R Visit(Literal expr);
+            R Visit(Logical expr);
+            R Visit(Set expr);
+            R Visit(Super expr);
+            R Visit(This expr);
+            R Visit(Unary expr);
+            R Visit(Variable expr);
         }
 
         public class Binary : Expr {
@@ -25,7 +25,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitBinaryExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr left;
@@ -38,7 +38,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitGroupingExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr expression;
@@ -49,7 +49,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitLiteralExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly object value;
@@ -61,7 +61,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitUnaryExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token Operator;
@@ -75,7 +75,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitAssignExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token name;
@@ -90,7 +90,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitCallExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr callee;
@@ -105,7 +105,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitGetExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr Object;
@@ -120,7 +120,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitLogicalExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr left;
@@ -136,7 +136,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                    return visitor.VisitSetExpr(this);
+                    return visitor.Visit(this);
             }
 
             public readonly Expr Object;
@@ -152,7 +152,7 @@ namespace CSLOXProj {
 
         
             public override R Accept<R>(IVisitor<R> visitor) {
-                    return visitor.VisitSuperExpr(this);
+                    return visitor.Visit(this);
             }
 
             public readonly Token keyword;
@@ -166,7 +166,7 @@ namespace CSLOXProj {
 
         
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitThisExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token keyword;
@@ -179,7 +179,7 @@ namespace CSLOXProj {
 
         
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitVariableExpr(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token name;

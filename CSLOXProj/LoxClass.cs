@@ -3,22 +3,22 @@
 namespace CSLOXProj {
     public class LoxClass : ILoxCallable {
         public readonly string name;
-        private readonly LoxClass superclass;
-        private readonly Dictionary<string, LoxFunction> methods;
+        public readonly LoxClass superclass;
+        private readonly HashMap<string, LoxFunction> methods;
 
-        public LoxClass(string name, LoxClass superclass, Dictionary<string, LoxFunction> methods) {
+        public LoxClass(string name, LoxClass superclass, HashMap<string, LoxFunction> methods) {
             this.superclass = superclass;
             this.name = name;
             this.methods = methods;
         }
 
-        public LoxFunction FindMethod(string name) {
+        public LoxFunction FindMethod(LoxInstance instance,  string name) {
             if (methods.ContainsKey(name)) {
-                return methods[name];
+                return methods.Get(name).Bind(instance);
             }
 
             if (superclass != null) {
-                return superclass.FindMethod(name);
+                return superclass.FindMethod(instance, name);
             }
 
             return null;
@@ -30,7 +30,7 @@ namespace CSLOXProj {
 
         public object Call(Interpreter interpreter, List<object> arguments) {
             LoxInstance instance = new(this);
-            LoxFunction initializer = FindMethod("init");
+            LoxFunction initializer = methods.Get("init");
             if (initializer != null) {
                 initializer.Bind(instance).Call(interpreter, arguments);
             }
@@ -40,7 +40,7 @@ namespace CSLOXProj {
 
         public int Arity {
             get {
-                LoxFunction initializer = FindMethod("init");
+                LoxFunction initializer = methods.Get("init");
                 return (initializer == null) ? 0 : initializer.Arity;
             }
         }

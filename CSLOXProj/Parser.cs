@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using static CSLOXProj.Expr;
 using static CSLOXProj.Stmt;
 
@@ -43,10 +44,10 @@ namespace CSLOXProj {
         private Stmt ClassDeclaration() {
             Token name = Consume(TokenType.IDENTIFIER, "Expect class name.");
 
-            Expr.Variable superclass = null;
+            Variable superclass = null;
             if (Match(TokenType.LESS)) {
                 Consume(TokenType.IDENTIFIER, "Expect superclass name.");
-                superclass = new Expr.Variable(Previous());
+                superclass = new Variable(Previous());
             }
 
             Consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
@@ -321,7 +322,7 @@ namespace CSLOXProj {
             {
                 do
                 {
-                    if (arguments.Count >= 255) Error(Peek(), "Cannot have more than 255 arguments.");
+                    if (arguments.Count() >= 255) Error(Peek(), "Cannot have more than 255 arguments.");
                     arguments.Add(Expression());
                 } while (Match(TokenType.COMMA));
             }

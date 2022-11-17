@@ -61,13 +61,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Clocks.cs" />
+    <Compile Include="HashMap.cs" />
     <Compile Include="LoxClass.cs" />
+    <Compile Include="LoxEnvironment.cs" />
     <Compile Include="LoxFunction.cs" />
-    <Compile Include="Environment.cs" />
     <Compile Include="LoxCallable.cs" />
     <Compile Include="LoxInstancecs.cs" />
     <Compile Include="Resolver.cs" />
     <Compile Include="Return.cs" />
+    <Compile Include="StackList.cs" />
     <Compile Include="Stmt.cs" />
     <Compile Include="LoxExceptions.cs" />
     <Compile Include="Interpreter.cs" />

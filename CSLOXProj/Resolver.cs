@@ -1,38 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace CSLOXProj {
 
-    public class Scope : Dictionary<string, bool> {
-    }
-
-    public class ScopeStack : List<Scope> {
-        public Scope Peek() {
-            if (Count == 0)
-            {
-                return null;
-            }
-            return this[0];
-        }
-
-
-        public void Pop() {
-            RemoveAt(0);
-        }
-
-        public void Push(Scope scope) {
-            Insert(0, scope);
-        }
-    }
     class Resolver : Expr.IVisitor<object>, Stmt.IVisitor<object> {
         private readonly Interpreter interpreter;
-        private readonly ScopeStack scopes;
+        private readonly StackList<HashMap<string, bool?>> scopes;
+
         private FunctionType currentFunction = FunctionType.NONE;
+        private ClassType currentClass = ClassType.NONE;
 
         public Resolver(Interpreter interpreter) {
             this.interpreter = interpreter;
-            scopes = new ScopeStack();
+            scopes = new StackList<HashMap<string, bool?>>();
         }
 
         private enum FunctionType {
@@ -49,8 +32,6 @@ namespace CSLOXProj {
             
         }
 
-        private ClassType currentClass = ClassType.NONE;
-
         public void Resolve(List<Stmt> statements) {
             foreach(Stmt statement in statements) {
                 Resolve(statement);
@@ -65,14 +46,14 @@ namespace CSLOXProj {
             expr.Accept(this);
         }
 
-        public object VisitBlockStmt(Stmt.Block stmt) {
+        public object Visit(Stmt.Block stmt) {
             BeginScope();
             Resolve(stmt.statements);
             EndScope();
             return null;
         }
 
-        public object VisitClassStmt(Stmt.Class stmt) {
+        public object Visit(Stmt.Class stmt) {
             ClassType enclosingClass = currentClass;
             currentClass = ClassType.CLASS;
 
@@ -86,15 +67,13 @@ namespace CSLOXProj {
             if (stmt.superclass != null) {
                 currentClass = ClassType.SUBCLASS;
                 Resolve(stmt.superclass);
-            }
 
-            if (stmt.superclass != null) {
                 BeginScope();
-                scopes.Peek()["super"] = true;
+                scopes.Peek().Put("super", true);
             }
 
             BeginScope();
-            scopes.Peek()["this"] = true;
+            scopes.Peek().Put("this", true);
 
             foreach (Stmt.Function method in stmt.methods) {
                 FunctionType declaration = FunctionType.METHOD;
@@ -114,12 +93,13 @@ namespace CSLOXProj {
         }
 
 
-        public object VisitExpressionStmt(Stmt.Expression stmt) {
+        public object Visit(Stmt.Expression stmt) {
             Resolve(stmt.expression);
             return null;
         }
 
-        public object VisitFunctionStmt(Stmt.Function stmt) {
+        public object Visit(Stmt.Function stmt) {
+
             Declare(stmt.name);
             Define(stmt.name);
 
@@ -127,19 +107,19 @@ namespace CSLOXProj {
             return null;
         }
 
-        public object VisitIfStmt(Stmt.If stmt) {
+        public object Visit(Stmt.If stmt) {
             Resolve(stmt.condition);
             Resolve(stmt.thenBranch);
             if (stmt.elseBranch != null) Resolve(stmt.elseBranch);
             return null;
         }
 
-        public object VisitPrintStmt(Stmt.Print stmt) {
+        public object Visit(Stmt.Print stmt) {
             Resolve(stmt.expression);
             return null;
         }
 
-        public object VisitReturnStmt(Stmt.Return stmt) {
+        public object Visit(Stmt.Return stmt) {
             if (currentFunction == FunctionType.NONE) {
                 Lox.Error(stmt.keyword, "Can't return from top-level code.");
             }
@@ -155,7 +135,7 @@ namespace CSLOXProj {
             return null;
         }
 
-        public object VisitVarStmt(Stmt.Var stmt) {
+        public object Visit(Stmt.Var stmt) {
             Declare(stmt.name);
             
             if (stmt.initializer != null) {
@@ -166,26 +146,25 @@ namespace CSLOXProj {
             return null;
         }
 
-        public object VisitWhileStmt(Stmt.While stmt) {
+        public object Visit(Stmt.While stmt) {
             Resolve(stmt.condition);
             Resolve(stmt.body);
             return null;
         }
 
-        public object VisitAssignExpr(Expr.Assign expr) {
+        public object Visit(Expr.Assign expr) {
             Resolve(expr.value);
-            Console.WriteLine("Assigning");
             ResolveLocal(expr, expr.name);
             return null;
         }
 
-        public object VisitBinaryExpr(Expr.Binary expr) {
+        public object Visit(Expr.Binary expr) {
             Resolve(expr.left);
             Resolve(expr.right);
             return null;
         }
 
-        public object VisitCallExpr(Expr.Call expr) {
+        public object Visit(Expr.Call expr) {
             Resolve(expr.callee);
 
             foreach (Expr argument in expr.arguments) {
@@ -195,33 +174,33 @@ namespace CSLOXProj {
             return null;
         }
 
-        public object VisitGetExpr(Expr.Get expr) {
+        public object Visit(Expr.Get expr) {
             Resolve(expr.Object);
             return null;
         }
 
-        public object VisitGroupingExpr(Expr.Grouping expr) {
+        public object Visit(Expr.Grouping expr) {
             Resolve(expr.expression);
             return null;
         }
 
-        public object VisitLiteralExpr(Expr.Literal expr) {
+        public object Visit(Expr.Literal expr) {
             return null;
         }
 
-        public object VisitLogicalExpr(Expr.Logical expr) {
+        public object Visit(Expr.Logical expr) {
             Resolve(expr.left);
             Resolve(expr.right);
             return null;
         }
 
-        public object VisitSetExpr(Expr.Set expr) {
+        public object Visit(Expr.Set expr) {
             Resolve(expr.value);
             Resolve(expr.Object);
             return null;
         }
 
-        public object VisitSuperExpr(Expr.Super expr) {
+        public object Visit(Expr.Super expr) {
             if (currentClass == ClassType.NONE) {
                 Lox.Error(expr.keyword, "Can't use 'super' outside of a class.");
             }
@@ -230,40 +209,36 @@ namespace CSLOXProj {
                 Lox.Error(expr.keyword, "Can't use 'super' in a class with no superclass.");
             }
 
-            Console.WriteLine("Super");
             ResolveLocal(expr, expr.keyword);
             return null;
         }
 
-        public object VisitThisExpr(Expr.This expr) {
+        public object Visit(Expr.This expr) {
             if (currentClass == ClassType.NONE) {
                 Lox.Error(expr.keyword, "Can't use 'this' outside of a class.");
                 return null;
             }
 
-            Console.WriteLine("This");
             ResolveLocal(expr, expr.keyword);
             return null;
         }
 
-        public object VisitUnaryExpr(Expr.Unary expr) {
+        public object Visit(Expr.Unary expr) {
             Resolve(expr.right);
             return null;
         }
 
-        public object VisitVariableExpr(Expr.Variable expr) {
-            if (scopes.Count != 0 && scopes.Peek()[expr.name.lexeme] == false) {
+        public object Visit(Expr.Variable expr) {
+            if (!scopes.IsEmpty() && scopes.Peek().Get(expr.name.lexeme) == false) {
                 Lox.Error(expr.name, "Can't read local variable in its own initializer.");
             }
 
-            Console.WriteLine("Variable");
             ResolveLocal(expr, expr.name);
             return null;
         }
 
         private void BeginScope() {
-            Scope scope = new();
-            scopes.Push(scope);
+            scopes.Push(new HashMap<string, bool?>());
         }
 
         private void EndScope() {
@@ -271,9 +246,9 @@ namespace CSLOXProj {
         }
 
         private void Declare(Token name) {
-            if (scopes.Count == 0) return;
+            if (!scopes.Any()) return;
 
-            Scope scope = scopes.Peek();
+            HashMap<string, bool?> scope = scopes.Peek();
 
             if (scope.ContainsKey(name.lexeme))
             {
@@ -285,13 +260,13 @@ namespace CSLOXProj {
 
         private void Define(Token name) {
             if (scopes.Count == 0) return;
-            scopes.Peek()[name.lexeme] = true;
+            scopes.Peek().Put(name.lexeme, true);
         }
 
         private void ResolveLocal(Expr expr, Token name) {
-            for (int i = scopes.Count - 1; i >= 0; i--) {
+            for (int i = scopes.Count() - 1; i >= 0; i--) {
                 if (scopes[i].ContainsKey(name.lexeme)) {
-                    interpreter.Resolve(expr, scopes.Count - 1 - i);
+                    interpreter.Resolve(expr, scopes.Count() - 1 - i);
                     return;
                 }
             }

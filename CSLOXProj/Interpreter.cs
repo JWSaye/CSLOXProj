@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using static CSLOXProj.Stmt;
 
 namespace CSLOXProj {
+
     public class Interpreter : Expr.IVisitor<object>, IVisitor<object> {
-        public Environment globals;
-        private Environment environment;
-        private readonly Dictionary<Expr, int> locals = new();
+        public readonly LoxEnvironment globals;
+        private LoxEnvironment environment;
+        private readonly HashMap<Expr, int?> locals = new();
 
         public Interpreter() {
-            globals = new Environment();
+            globals = new LoxEnvironment();
             environment = globals;
             DefineNativeFunctions();
         }
@@ -19,27 +21,131 @@ namespace CSLOXProj {
             globals.Define("clock", clock);
         }
 
-        public object VisitLiteralExpr(Expr.Literal expr) {
+        private object LookUpVariable(Token name, Expr expr) {
+            int? distance = locals.Get(expr);
+
+            if (distance != null) {
+                return environment.GetAt(distance.Value, name.lexeme);
+            }
+            else {
+                return globals.Get(name);
+            }
+        }
+
+        private object Evaluate(Expr expr) {
+            return expr.Accept(this);
+        }
+
+        private object Execute(Stmt stmt) {
+            if(stmt != null) return stmt.Accept(this);
+            return null;
+        }
+
+        public void Resolve(Expr expr, int depth) {
+            locals[expr] = depth;
+        }
+
+        public void ExecuteBlock(List<Stmt> statements, LoxEnvironment environment) {
+            LoxEnvironment previous = this.environment;
+            try {
+                this.environment = environment;
+
+                foreach (Stmt statement in statements) {
+                    Execute(statement);
+                }
+            }
+            finally {
+                this.environment = previous;
+            }
+        }
+
+        private bool IsTruthy(object truthyObject)
+        {
+            if (truthyObject == null) return false;
+            if (truthyObject is bool boolean) return boolean;
+            return true;
+        }
+
+        private bool IsEqual(object a, object b)
+        {
+            if (a == null && b == null) return true;
+            if (a == null) return false;
+
+            return a.Equals(b);
+        }
+
+        private void CheckNumberOperand(Token Operator, object operand)
+        {
+            if (operand is double) return;
+            throw new RuntimeError(Operator, "Operand must be a number.");
+        }
+
+        private void CheckNumberOperands(Token Operator, object left, object right)
+        {
+            if (left is double && right is double) return;
+
+            throw new RuntimeError(Operator, "Operands must be numbers.");
+        }
+
+        public void Interpret(List<Stmt> statements)
+        {
+            try
+            {
+                foreach (Stmt statement in statements)
+                {
+                    Execute(statement);
+                }
+            }
+            catch (RuntimeError error)
+            {
+                Lox.RuntimeError(error);
+            }
+        }
+
+        private string Stringify(object Object)
+        {
+            if (Object == null) return "nil";
+
+            if (Object is double)
+            {
+                string text = Object.ToString();
+                if (text.EndsWith(".0"))
+                {
+                    text = text.Substring(0, text.Length - 2);
+                }
+                return text;
+            }
+
+            return Object.ToString();
+        }
+
+        public object Visit(Expr.Literal expr)
+        {
             return expr.value;
         }
 
-        public object VisitLogicalExpr(Expr.Logical expr) {
+        public object Visit(Expr.Logical expr)
+        {
             object left = Evaluate(expr.left);
 
-            if (expr.Operator.type == TokenType.OR) {
+            if (expr.Operator.type == TokenType.OR)
+            {
                 if (IsTruthy(left)) return left;
-            } 
-            else {
+            }
+            else
+            {
                 if (!IsTruthy(left)) return left;
             }
 
             return Evaluate(expr.right);
         }
 
-        public object VisitSetExpr(Expr.Set expr) {
+        public object Visit(Expr.Set expr)
+        {
             object Object = Evaluate(expr.Object);
 
-            if (Object is not LoxInstance) {
+            if (Object is not LoxInstance)
+            {
                 throw new RuntimeError(expr.name, "Only instances have fields.");
             }
 
@@ -48,33 +154,39 @@ namespace CSLOXProj {
             return value;
         }
 
-        public object VisitSuperExpr(Expr.Super expr) {
-            int distance = locals[expr];
-            LoxClass superclass = (LoxClass)environment.GetAt(distance, "super");
+        public object Visit(Expr.Super expr)
+        {
+            int? distance = locals[expr];
+            LoxClass superclass = (LoxClass)environment.GetAt(distance.Value, "super");
 
-            LoxInstance Object = (LoxInstance)environment.GetAt(distance - 1, "this");
+            LoxInstance Object = (LoxInstance)environment.GetAt(distance.Value - 1, "this");
 
-            LoxFunction method = superclass.FindMethod(expr.method.lexeme);
+            LoxFunction method = superclass.FindMethod(Object, expr.method.lexeme);
 
-            if (method == null) {
+            if (method == null)
+            {
                 throw new RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
             }
 
-            return method.Bind(Object);
+            return method;
         }
 
-        public object VisitThisExpr(Expr.This expr) {
+        public object Visit(Expr.This expr)
+        {
             return LookUpVariable(expr.keyword, expr);
         }
 
-        public object VisitGroupingExpr(Expr.Grouping expr) {
+        public object Visit(Expr.Grouping expr)
+        {
             return Evaluate(expr.expression);
         }
 
-        public object VisitUnaryExpr(Expr.Unary expr) {
+        public object Visit(Expr.Unary expr)
+        {
             object right = Evaluate(expr.right);
 
-            switch (expr.Operator.type) {
+            switch (expr.Operator.type)
+            {
                 case TokenType.BANG:
                     return !IsTruthy(right);
                 case TokenType.MINUS:
@@ -86,26 +198,18 @@ namespace CSLOXProj {
             return null;
         }
 
-        public object VisitVariableExpr(Expr.Variable expr) {
+        public object Visit(Expr.Variable expr)
+        {
             return LookUpVariable(expr.name, expr);
         }
 
-        private object LookUpVariable(Token name, Expr expr) {
-            int? distance = locals[expr];
-
-            if (distance != null) {
-                return environment.GetAt((int)distance, name.lexeme);
-            }
-            else {
-                return globals.Get(name);
-            }
-        }
-
-        public object VisitBinaryExpr(Expr.Binary expr) {
+        public object Visit(Expr.Binary expr)
+        {
             object left = Evaluate(expr.left);
             object right = Evaluate(expr.right);
 
-            switch (expr.Operator.type) {
+            switch (expr.Operator.type)
+            {
                 case TokenType.BANG_EQUAL: return !IsEqual(left, right);
                 case TokenType.EQUAL_EQUAL: return IsEqual(left, right);
                 case TokenType.GREATER:
@@ -130,11 +234,13 @@ namespace CSLOXProj {
                     CheckNumberOperands(expr.Operator, left, right);
                     return (double)left * (double)right;
                 case TokenType.PLUS:
-                    if (left is double @double && right is double double1) {
+                    if (left is double @double && right is double double1)
+                    {
                         return @double + double1;
                     }
 
-                    if (left is string @string && right is string string1) {
+                    if (left is string @string && right is string string1)
+                    {
                         return @string + string1;
                     }
 
@@ -145,82 +251,53 @@ namespace CSLOXProj {
             return null;
         }
 
-        private object Evaluate(Expr expr) {
-            return expr.Accept(this);
-        }
-
-        private object Execute(Stmt stmt) {
-            if(stmt != null) return stmt.Accept(this);
+        public object Visit(Block stmt) {
+            ExecuteBlock(stmt.statements, new LoxEnvironment(environment));
             return null;
         }
 
-        public void Resolve(Expr expr, int depth) {
-            locals[expr] = depth;
-        }
-
-        public void ExecuteBlock(List<Stmt> statements, Environment environment) {
-            Environment previous = this.environment;
-            try {
-                this.environment = environment;
-
-                foreach (Stmt statement in statements) {
-                    Execute(statement);
-                }
-            }
-            finally {
-                this.environment = previous;
-            }
-        }
-
-        public object VisitBlockStmt(Block stmt) {
-            ExecuteBlock(stmt.statements, new Environment(environment));
-            return null;
-        }
-
-        public object VisitClassStmt(Class stmt) {
+        public object Visit(Class stmt) {
+            environment.Define(stmt.name.lexeme, null);
             object superclass = null;
+
             if (stmt.superclass != null) {
                 superclass = Evaluate(stmt.superclass);
                 if (superclass is not LoxClass) {
                     throw new RuntimeError(stmt.superclass.name, "Superclass must be a class.");
                 }
-            }
 
-            environment.Define(stmt.name.lexeme, null);
-
-            if (stmt.superclass != null) {
-                environment = new Environment(environment);
+                environment = new LoxEnvironment(environment);
                 environment.Define("super", superclass);
             }
 
-            Dictionary<string, LoxFunction> methods = new();
+            HashMap<string, LoxFunction> methods = new();
             foreach (Function method in stmt.methods) {
                 LoxFunction function = new(method, environment, method.name.lexeme.Equals("init"));
-                methods[method.name.lexeme] = function;
+                methods.Put(method.name.lexeme, function);
             }
 
-            LoxClass klass = new(stmt.name.lexeme, (LoxClass)superclass, methods);
+            LoxClass @klass = new(stmt.name.lexeme, (LoxClass)superclass, methods);
 
             if (superclass != null) {
                 environment = environment.enclosing;
             }
 
-            environment.Assign(stmt.name, klass);
+            environment.Assign(stmt.name, @klass);
             return null;
         }
 
-        public object VisitExpressionStmt(Expression stmt) {
+        public object Visit(Expression stmt) {
             Evaluate(stmt.expression);
             return null;
         }
 
-        public object VisitFunctionStmt(Function stmt) {
+        public object Visit(Function stmt) {
             LoxFunction function = new(stmt, environment, false);
             environment.Define(stmt.name.lexeme, function);
             return null;
         }
 
-        public object VisitIfStmt(If stmt) {
+        public object Visit(If stmt) {
             if (IsTruthy(Evaluate(stmt.condition))) {
                 Execute(stmt.thenBranch);
             }
@@ -230,20 +307,20 @@ namespace CSLOXProj {
             return null;
         }
 
-        public object VisitPrintStmt(Print stmt) {
+        public object Visit(Print stmt) {
             object value = Evaluate(stmt.expression);
             Console.WriteLine(Stringify(value));
             return null;
         }
 
-        public object VisitReturnStmt(Stmt.Return stmt) {
+        public object Visit(Stmt.Return stmt) {
             object value = null;
             if (stmt.value != null) value = Evaluate(stmt.value);
 
             throw new Return(value);
         }
 
-        public object VisitVarStmt(Var stmt) {
+        public object Visit(Var stmt) {
             object value = null;
             if (stmt.initializer != null) {
                 value = Evaluate(stmt.initializer);
@@ -253,12 +330,12 @@ namespace CSLOXProj {
             return null;
         }
 
-        public object VisitAssignExpr(Expr.Assign expr) {
+        public object Visit(Expr.Assign expr) {
             object value = Evaluate(expr.value);
 
-            int? distance = locals[expr];
+            int? distance = locals.Get(expr);
             if (distance != null) {
-                environment.AssignAt((int)distance, expr.name, value);
+                environment.AssignAt(distance.Value, expr.name, value);
             }
             else {
                 globals.Assign(expr.name, value);
@@ -267,63 +344,14 @@ namespace CSLOXProj {
             return value;
         }
 
-        private bool IsTruthy(object truthyObject) {
-            if (truthyObject == null) return false;
-            if (truthyObject is bool boolean) return boolean;
-            return true;
-        }
-
-        private bool IsEqual(object a, object b) {
-            if (a == null && b == null) return true;
-            if (a == null) return false;
-
-            return a.Equals(b);
-        }
-
-        private void CheckNumberOperand(Token Operator, object operand) {
-            if (operand is double) return;
-            throw new RuntimeError(Operator, "Operand must be a number.");
-        }
-
-        private void CheckNumberOperands(Token Operator, object left, object right) {
-            if (left is double && right is double) return;
-
-            throw new RuntimeError(Operator, "Operands must be numbers.");
-        }
-
-        public void Interpret(List<Stmt> statements) {
-            try {
-                foreach (Stmt statement in statements) {
-                    Execute(statement);
-                }
-            }
-            catch (RuntimeError error) {
-                Lox.RuntimeError(error);
-            }
-        }
-
-        private string Stringify(object Object) {
-            if (Object == null) return "nil";
-
-            if (Object is double) {
-                string text = Object.ToString();
-                if (text.EndsWith(".0")) {
-                    text = text.Substring(0, text.Length - 2);
-                }
-                return text;
-            }
-
-            return Object.ToString();
-        }
-
-        public object VisitWhileStmt(While stmt) {
+        public object Visit(While stmt) {
             while (IsTruthy(Evaluate(stmt.condition))) {
                 Execute(stmt.body);
             }
             return null;
         }
 
-        public object VisitCallExpr(Expr.Call expr) {
+        public object Visit(Expr.Call expr) {
             object callee = Evaluate(expr.callee);
 
             List<object> arguments = new();
@@ -331,20 +359,20 @@ namespace CSLOXProj {
                 arguments.Add(Evaluate(argument));
             }
 
-            ILoxCallable function = callee as ILoxCallable;
-
-            if (callee is ILoxCallable) {
+            if (callee is not ILoxCallable) {
                 throw new RuntimeError(expr.paren,"Can only call functions and classes.");
             }
 
-            if (arguments.Count != function.Arity) {
+            ILoxCallable function = callee as ILoxCallable;
+
+            if (arguments.Count() != function.Arity) {
                 throw new RuntimeError(expr.paren, "Expected " + function.Arity + " arguments but got " + arguments.Count + ".");
             }
 
             return function.Call(this, arguments);
         }
 
-        public object VisitGetExpr(Expr.Get expr) {
+        public object Visit(Expr.Get expr) {
             object Object = Evaluate(expr.Object);
             if (Object is LoxInstance instance) {
                 return instance.Get(expr.name);

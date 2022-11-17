@@ -1,9 +1,9 @@
 ﻿namespace CSLOXProj {
     class Return : LoxExceptions {
-        public readonly object value;
+        public object Value { get; }
 
         public Return(object value) : base() {
-            this.value = value;
+            this.Value = value;
         }
     }
 }

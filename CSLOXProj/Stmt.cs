@@ -3,15 +3,15 @@
 namespace CSLOXProj {
     public abstract class Stmt {
         public interface IVisitor<R> {
-            R VisitBlockStmt(Block stmt);
-            R VisitClassStmt(Class stmt);
-            R VisitExpressionStmt(Expression stmt);
-            R VisitFunctionStmt(Function stmt);
-            R VisitIfStmt(If stmt);
-            R VisitPrintStmt(Print stmt);
-            R VisitReturnStmt(Return stmt);
-            R VisitVarStmt(Var stmt);
-            R VisitWhileStmt(While stmt);
+            R Visit(Block stmt);
+            R Visit(Class stmt);
+            R Visit(Expression stmt);
+            R Visit(Function stmt);
+            R Visit(If stmt);
+            R Visit(Print stmt);
+            R Visit(Return stmt);
+            R Visit(Var stmt);
+            R Visit(While stmt);
         }
 
         // Nested Stmt classes here...
@@ -21,27 +21,25 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitBlockStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly List<Stmt> statements;
         }
         
         public class Class : Stmt {
-            public Class(Token name,
-                  Expr.Variable superclass,
-                  List<Stmt.Function> methods) {
+            public Class(Token name, Expr.Variable superclass, List<Function> methods) {
                 this.name = name;
                 this.superclass = superclass;
                 this.methods = methods;
             }
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitClassStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token name;
             public readonly Expr.Variable superclass;
-            public readonly List<Stmt.Function> methods;
+            public readonly List<Function> methods;
         }
         
         public class Expression : Stmt {
@@ -50,7 +48,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitExpressionStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr expression;
@@ -63,7 +61,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitIfStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr condition;
@@ -77,7 +75,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitPrintStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr expression;
@@ -90,7 +88,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitReturnStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token keyword;
@@ -104,7 +102,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitVarStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token name;
@@ -118,7 +116,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) {
-                return visitor.VisitWhileStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Expr condition;
@@ -133,7 +131,7 @@ namespace CSLOXProj {
             }
 
             public override R Accept<R>(IVisitor<R> visitor) { 
-                return visitor.VisitFunctionStmt(this);
+                return visitor.Visit(this);
             }
 
             public readonly Token name;
