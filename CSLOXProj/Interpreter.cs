@@ -326,10 +326,7 @@ namespace CSLOXProj {
                 value = Evaluate(stmt.initializer);
             }
             
-            Console.WriteLine("Value: " + Stringify(value));
-            Console.WriteLine("Lexeme: " + Stringify(stmt.name.lexeme));
             environment.Define(stmt.name.lexeme, value);
-            Console.WriteLine("Past define in visit var stmt");
             return null;
         }
 
