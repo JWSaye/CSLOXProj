@@ -143,6 +143,7 @@ namespace CSLOXProj {
             }
 
             Define(stmt.name);
+            Console.WriteLine("Past define");
             return null;
         }
 
@@ -259,8 +260,9 @@ namespace CSLOXProj {
         }
 
         private void Define(Token name) {
-            if (scopes.Count == 0) return;
+            if (scopes.Count() == 0) return;
             scopes.Peek().Put(name.lexeme, true);
+            Console.WriteLine("Here");
         }
 
         private void ResolveLocal(Expr expr, Token name) {

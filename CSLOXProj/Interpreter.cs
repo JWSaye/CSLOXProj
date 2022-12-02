@@ -42,7 +42,7 @@ namespace CSLOXProj {
         }
 
         public void Resolve(Expr expr, int depth) {
-            locals[expr] = depth;
+            locals.Put(expr, depth);
         }
 
         public void ExecuteBlock(List<Stmt> statements, LoxEnvironment environment) {
@@ -156,7 +156,7 @@ namespace CSLOXProj {
 
         public object Visit(Expr.Super expr)
         {
-            int? distance = locals[expr];
+            int? distance = locals.Get(expr);
             LoxClass superclass = (LoxClass)environment.GetAt(distance.Value, "super");
 
             LoxInstance Object = (LoxInstance)environment.GetAt(distance.Value - 1, "this");
@@ -325,8 +325,11 @@ namespace CSLOXProj {
             if (stmt.initializer != null) {
                 value = Evaluate(stmt.initializer);
             }
-
+            
+            Console.WriteLine("Value: " + Stringify(value));
+            Console.WriteLine("Lexeme: " + Stringify(stmt.name.lexeme));
             environment.Define(stmt.name.lexeme, value);
+            Console.WriteLine("Past define in visit var stmt");
             return null;
         }
 

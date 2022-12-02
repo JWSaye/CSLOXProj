@@ -30,6 +30,7 @@ namespace CSLOXProj {
 
             if (hadError) System.Environment.Exit(65);
             if (hadRuntimeError) System.Environment.Exit(70);
+            System.Environment.Exit(0);
         }
 
         static private void RunPrompt() {
@@ -53,7 +54,7 @@ namespace CSLOXProj {
             Resolver resolver = new(interpreter);
             resolver.Resolve(statements);
 
-            if (hadError) return;
+            if (hadError || hadRuntimeError) return;
 
             interpreter.Interpret(statements);
         }

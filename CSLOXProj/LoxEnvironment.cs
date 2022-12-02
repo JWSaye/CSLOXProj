@@ -3,11 +3,11 @@
     public class LoxEnvironment
     {
         public LoxEnvironment enclosing;
-        private readonly HashMap<string, object> values;
+        private /*readonly*/ HashMap<string, object> values;
 
         public LoxEnvironment()
         {
-            values = new();
+            values = new HashMap<string, object>();
             enclosing = null;
         }
 
@@ -48,6 +48,10 @@
 
         public void Define(string name, object value)
         {
+            if(values == null)
+            {
+                values = new HashMap<string, object>();
+            }
             values.Put(name, value);
         }
 
